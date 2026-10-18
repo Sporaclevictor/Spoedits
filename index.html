@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spoedit – Passport photos, photo enhancer, posters & document editing</title>
+<meta name="description" content="Spoedit: professional passport photos, blurry photo fixer, iPhone-quality photos, poster design, ID cards, invoices and document editing. Try free.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{
+  --paper:#ffffff; --mist:#eef3ef; --ink:#12201a; --muted:#5a6b62;
+  --green:#0e6b4a; --green-d:#0a4d35; --flash:#ffd23f; --line:#d5e0d9; --danger:#c0392b;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.55;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;line-height:1.08;letter-spacing:-.02em}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--flash);outline-offset:2px}
+.wrap{width:min(1100px,92%);margin-inline:auto}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:12px}
+.logo{font-family:'Bricolage Grotesque';font-weight:800;font-size:1.5rem;text-decoration:none;display:flex;align-items:center;gap:8px}
+.logo i{width:22px;height:22px;border:3px solid var(--green);border-radius:6px;position:relative;display:inline-block}
+.logo i::after{content:"";position:absolute;inset:4px;background:var(--flash);border-radius:50%}
+.badge{font-size:.82rem;background:var(--mist);border:1px solid var(--line);padding:6px 12px;border-radius:99px;white-space:nowrap}
+.badge b{color:var(--green)}
+
+/* hero */
+.hero{padding:56px 0 40px;display:grid;gap:36px;grid-template-columns:1.1fr .9fr;align-items:center}
+.hero h1{font-size:clamp(2.2rem,6vw,4rem);font-weight:800}
+.hero p{margin:18px 0 26px;font-size:1.1rem;color:var(--muted);max-width:52ch}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:12px;border:2px solid var(--green);background:var(--green);color:#fff;font:700 1rem 'DM Sans';cursor:pointer;text-decoration:none;transition:background .15s,transform .15s}
+.btn:hover{background:var(--green-d)}
+.btn:active{transform:scale(.98)}
+.btn.alt{background:#fff;color:var(--green)}
+.btn.alt:hover{background:var(--mist)}
+.btn.flash{background:var(--flash);border-color:var(--flash);color:var(--ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.finder{aspect-ratio:35/45;max-width:340px;margin-inline:auto;position:relative;background:linear-gradient(160deg,#cfe3d8,#9fc7b3);border-radius:10px;overflow:hidden}
+.finder .corner{position:absolute;width:38px;height:38px;border:4px solid #fff}
+.c1{top:14px;left:14px;border-right:0;border-bottom:0}.c2{top:14px;right:14px;border-left:0;border-bottom:0}
+.c3{bottom:14px;left:14px;border-right:0;border-top:0}.c4{bottom:14px;right:14px;border-left:0;border-top:0}
+.finder .head{position:absolute;left:50%;top:26%;width:34%;aspect-ratio:1;background:#5a3f2e;border-radius:50%;transform:translateX(-50%)}
+.finder .body{position:absolute;left:50%;bottom:-6%;width:70%;height:42%;background:#12201a;border-radius:50% 50% 0 0;transform:translateX(-50%)}
+.finder span{position:absolute;bottom:10px;left:0;right:0;text-align:center;color:#fff;font-weight:700;font-size:.82rem;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+.finder .scan{position:absolute;left:0;right:0;height:3px;background:var(--flash);box-shadow:0 0 14px var(--flash);animation:scan 3.2s ease-in-out infinite}
+@keyframes scan{0%,100%{top:8%}50%{top:88%}}
+@media (prefers-reduced-motion:reduce){.finder .scan{animation:none;top:50%}}
+
+/* price strip */
+.strip{background:var(--green);color:#fff;padding:14px 0;font-weight:500}
+.strip .wrap{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;text-align:center}
+
+/* tools */
+#tools{padding:56px 0}
+#tools h2{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:8px}
+.sub{color:var(--muted);margin-bottom:24px}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:18px;scrollbar-width:thin}
+.tab{flex:0 0 auto;padding:10px 16px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font:500 .95rem 'DM Sans';cursor:pointer}
+.tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.panel{display:none;grid-template-columns:340px 1fr;gap:26px;background:var(--mist);border:1px solid var(--line);border-radius:18px;padding:22px}
+.panel.on{display:grid}
+.controls{display:flex;flex-direction:column;gap:14px}
+.controls h3{font-size:1.4rem}
+.controls p.hint{font-size:.9rem;color:var(--muted)}
+label{font-size:.88rem;font-weight:700;display:block;margin-bottom:5px}
+input[type=text],input[type=file],input[type=number],select,textarea{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font:400 1rem 'DM Sans';color:var(--ink)}
+textarea{min-height:110px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--green)}
+input[type=color]{width:100%;height:42px;border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:3px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:8px;align-items:center;font-size:.92rem}
+.check input{width:18px;height:18px;accent-color:var(--green)}
+.stage{background:#fff;border:1.5px dashed var(--line);border-radius:14px;min-height:300px;display:flex;align-items:center;justify-content:center;padding:14px;position:relative;overflow:hidden}
+.stage canvas{max-width:100%;max-height:70vh;height:auto;border-radius:6px;box-shadow:0 2px 14px rgba(0,0,0,.12)}
+.stage .empty{color:var(--muted);text-align:center;max-width:30ch}
+.stage .loading{position:absolute;inset:0;background:rgba(255,255,255,.9);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-weight:700;text-align:center;padding:20px}
+.stage .loading.on{display:flex}
+.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--green);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.docbox{display:flex;flex-direction:column;gap:10px;width:100%;align-self:stretch}
+.docbox textarea{min-height:340px;font-family:ui-monospace,Menlo,monospace;font-size:.92rem}
+.note{font-size:.82rem;color:var(--muted)}
+.result-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+
+/* how + footer */
+.how{padding:30px 0 60px}
+.how h2{font-size:2rem;margin-bottom:18px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.steps div{border-top:4px solid var(--flash);padding-top:12px}
+.steps h3{font-size:1.1rem;margin-bottom:4px}
+.steps p{font-size:.92rem;color:var(--muted)}
+footer{background:var(--ink);color:#cfdcd4;padding:34px 0;font-size:.92rem}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--flash)}
+
+
+.pricetag{align-self:center;font-size:.85rem;font-weight:700;color:var(--green)}
+.svc .price{margin-left:10px;font-size:.85rem;font-weight:700;color:var(--muted)}
+.guard{background:#fff8dc;border:1px solid #f0dc8a;border-radius:10px;padding:10px 12px;font-size:.85rem}
+.modal .card input[type=text]{margin-bottom:0}
+/* ===== motion & polish ===== */
+body{overflow-x:hidden}
+[hidden]{display:none!important}
+main{position:relative;isolation:isolate}
+#prog{position:fixed;top:0;left:0;height:3px;width:100%;background:linear-gradient(90deg,var(--green),var(--flash));transform:scaleX(0);transform-origin:left;z-index:60}
+.bgfx{position:absolute;inset:0 0 auto 0;height:780px;overflow:hidden;z-index:-1;pointer-events:none}
+.bgfx i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.6;animation:drift 14s ease-in-out infinite alternate}
+.bgfx i:nth-child(1){width:420px;height:420px;background:#bfe8d3;left:-80px;top:-60px}
+.bgfx i:nth-child(2){width:360px;height:360px;background:#fff0b3;right:-60px;top:80px;animation-delay:-5s}
+.bgfx i:nth-child(3){width:300px;height:300px;background:#a9d6c2;left:42%;top:360px;animation-delay:-9s}
+@keyframes drift{to{transform:translate(70px,46px) scale(1.18)}}
+.hero h1 .w{display:inline-block;opacity:0;transform:translateY(.55em) rotate(2deg);animation:wIn .8s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i)*70ms + 150ms)}
+@keyframes wIn{to{opacity:1;transform:none}}
+.hero p,.hero-actions{opacity:0;animation:fadeUp .8s .9s cubic-bezier(.2,.8,.2,1) forwards}
+.hero-actions{animation-delay:1.1s}
+@keyframes fadeUp{from{transform:translateY(16px)}to{opacity:1;transform:none}}
+.finder-wrap{position:relative;max-width:360px;width:100%;margin-inline:auto;animation:fadeUp .9s .4s both}
+.finder::before{content:"";position:absolute;inset:0;background:#fff;opacity:0;z-index:3;animation:flash 6s 2s infinite}
+@keyframes flash{0%,93%,100%{opacity:0}95%{opacity:.9}}
+.finder .head{animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{50%{transform:translateX(-50%) translateY(-3px)}}
+.chip{position:absolute;z-index:4;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:.82rem;font-weight:700;box-shadow:0 10px 26px rgba(14,107,74,.2);animation:bob 4s ease-in-out infinite;white-space:nowrap}
+.chip::before{content:"✓";color:#fff;background:var(--green);border-radius:50%;width:18px;height:18px;display:inline-grid;place-items:center;font-size:.7rem;margin-right:7px}
+.chip.a{left:-34px;top:16%}.chip.b{right:-30px;top:46%;animation-delay:-1.3s}.chip.c{left:-22px;bottom:11%;animation-delay:-2.6s}
+@keyframes bob{50%{transform:translateY(-10px)}}
+.hero-actions .btn.flash{animation:ring 2.6s 2s infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(255,210,63,.7)}70%,100%{box-shadow:0 0 0 16px rgba(255,210,63,0)}}
+.btn{position:relative;overflow:hidden}
+.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.5) 50%,transparent 70%);transform:translateX(-120%);pointer-events:none}
+.btn:hover::after{transform:translateX(120%);transition:transform .7s}
+.strip{overflow:hidden;padding:16px 0}
+.track{display:flex;width:max-content;animation:marq 30s linear infinite}
+.track span{white-space:nowrap;font-weight:700;display:flex;align-items:center;padding-right:44px}
+.track span::after{content:"✦";color:var(--flash);margin-left:44px}
+.strip:hover .track{animation-play-state:paused}
+@keyframes marq{to{transform:translateX(-50%)}}
+.reveal{opacity:0;translate:0 30px;transition:opacity .8s cubic-bezier(.2,.8,.2,1),translate .8s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;translate:0 0}
+.services{padding:60px 0 6px}
+.services h2{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:8px}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+.svc{--rx:0deg;--ry:0deg;position:relative;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:22px;cursor:pointer;font:inherit;color:inherit;overflow:hidden;
+  transform:perspective(800px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition:opacity .8s cubic-bezier(.2,.8,.2,1),translate .8s cubic-bezier(.2,.8,.2,1),transform .2s,box-shadow .3s,border-color .3s}
+.svc>*{position:relative}
+.svc::before{content:"";position:absolute;inset:0;background:radial-gradient(280px circle at var(--mx,50%) var(--my,0%),rgba(255,210,63,.38),transparent 62%);opacity:0;transition:opacity .3s}
+.svc:hover::before{opacity:1}
+.svc:hover{border-color:var(--green);box-shadow:0 20px 44px rgba(14,107,74,.18)}
+.svc svg{width:46px;height:46px;padding:10px;border-radius:13px;background:var(--mist);stroke:var(--green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .4s,background .3s,stroke .3s}
+.svc:hover svg{background:var(--green);stroke:#fff;transform:rotate(-8deg) scale(1.12)}
+.svc h3{font-size:1.2rem;margin:14px 0 4px}
+.svc p{color:var(--muted);font-size:.93rem}
+.svc .go{display:inline-block;margin-top:12px;font-weight:700;color:var(--green);font-size:.9rem;border-bottom:2px solid var(--flash)}
+.tab{transition:background .25s,color .25s,border-color .25s,transform .2s}
+.tab:hover{transform:translateY(-2px);border-color:var(--green)}
+.panel{align-items:start}
+.panel.on{animation:panelIn .55s cubic-bezier(.2,.8,.2,1)}
+@keyframes panelIn{from{opacity:0;transform:translateY(18px) scale(.985)}}
+.stage canvas{animation:pop .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:scale(.96)}}
+.steps div{position:relative}
+.steps div::before{content:"";position:absolute;top:-4px;left:0;height:4px;width:0;background:var(--green);transition:width 1s .3s}
+.steps div.in::before{width:100%}
+.card{animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+input[type=date],input[type=email]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font:400 1rem 'DM Sans',sans-serif;color:var(--ink)}
+.itemhead,.itemrow{display:grid;grid-template-columns:1fr 54px 86px 30px;gap:6px}
+.itemhead{font-size:.76rem;font-weight:700;color:var(--muted);padding:0 2px}
+.itemrow input{padding:9px 8px;font-size:.92rem}
+.itemrow .x{border:0;background:#fff;border-radius:8px;color:var(--danger);font-size:1.2rem;cursor:pointer}
+.itemrow .x:hover{background:#fde8e5}
+#iv-items{display:flex;flex-direction:column;gap:6px}
+#p-invoice .stage{position:sticky;top:76px}
+@media (max-width:860px){.svc-grid{grid-template-columns:1fr 1fr}.finder-wrap{order:-1;max-width:260px}.chip.a{left:-14px}.chip.b{right:-14px}.chip.c{left:-8px}#p-invoice .stage{position:static}}
+@media (max-width:520px){.svc-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .hero h1 .w,.hero p,.hero-actions,.reveal{opacity:1;transform:none;translate:none}
+}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(10,20,15,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal.on{display:flex}
+.card{background:#fff;border-radius:18px;padding:26px;width:min(480px,100%);max-height:92vh;overflow:auto}
+.card h3{font-size:1.5rem;margin-bottom:6px}
+.card ol{margin:12px 0 16px 20px;color:var(--muted);font-size:.95rem}
+.card .divider{height:1px;background:var(--line);margin:18px 0}
+.msg{font-size:.9rem;margin-top:8px;min-height:1.3em}
+.msg.err{color:var(--danger)}.msg.ok{color:var(--green)}
+.close{float:right;background:none;border:0;font-size:1.6rem;cursor:pointer;line-height:1}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;padding-top:32px}
+  .finder{max-width:240px;order:-1}
+  .panel{grid-template-columns:1fr;padding:16px}
+  .steps{grid-template-columns:1fr 1fr}
+}
+@media (max-width:480px){.steps{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="prog" aria-hidden="true"></div>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#top"><i></i>Spoedit</a>
+    <div class="badge" id="badge" aria-live="polite"></div>
+  </div>
+</header>
+
+<main id="top">
+<div class="bgfx" aria-hidden="true"><i></i><i></i><i></i></div>
+<section class="wrap hero">
+  <div>
+    <h1>Studio-quality photos and documents, without the studio.</h1>
+    <p>Make passport photos, rescue blurry pictures, get that iPhone-camera look, design posters, create invoices and edit documents. Try two edits free. After that, you pay per edit, and the price is shown on each tool.</p>
+    <div class="hero-actions">
+      <a class="btn flash" href="#tools">Start free trial</a>
+      <a class="btn alt" id="heroWa" href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
+    </div>
+  </div>
+  <div class="finder-wrap" aria-hidden="true">
+    <div class="finder">
+      <div class="head"></div><div class="body"></div><div class="scan"></div>
+      <i class="corner c1"></i><i class="corner c2"></i><i class="corner c3"></i><i class="corner c4"></i>
+      <span>35 × 45 mm · white background</span>
+    </div>
+    <div class="chip a">Background removed</div><div class="chip b">Print-ready size</div><div class="chip c">Same face, sharper</div>
+  </div>
+</section>
+
+<div class="strip" aria-label="What Spoedit offers"><div class="track">
+  <span>Passport photos</span><span>Photo enhancer</span><span>iPhone look</span><span>Posters &amp; flyers</span><span>Invoices &amp; receipts</span><span>Document editing</span><span>2 free edits</span><span>Pay per edit</span><span>ID cards</span>
+</div></div>
+
+<section class="wrap services" id="services">
+  <h2>Everything you need, in one place</h2>
+  <p class="sub">Choose a tool to open it. Try it free before you pay.</p>
+  <div class="svc-grid" id="svcGrid"></div>
+</section>
+
+<section id="tools" class="wrap">
+  <h2>Pick a tool</h2>
+  <p class="sub">Your photos are processed on your device and are not stored on our servers.</p>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-t="passport" aria-selected="true">Passport photo</button>
+    <button class="tab" role="tab" data-t="enhance" aria-selected="false">Fix blurry photo</button>
+    <button class="tab" role="tab" data-t="iphone" aria-selected="false">iPhone look</button>
+    <button class="tab" role="tab" data-t="poster" aria-selected="false">Poster &amp; flyer</button>
+    <button class="tab" role="tab" data-t="invoice" aria-selected="false">Invoice &amp; receipt</button>
+    <button class="tab" role="tab" data-t="idcard" aria-selected="false">ID card</button>
+    <button class="tab" role="tab" data-t="doc" aria-selected="false">Edit document</button>
+  </div>
+
+  <!-- PASSPORT -->
+  <div class="panel on" id="p-passport">
+    <div class="controls">
+      <h3>Passport photo</h3>
+      <p class="hint">Your face is kept exactly as it is. Only the background and the crop change.</p>
+      <div><label for="pp-file">Upload your photo</label><input type="file" id="pp-file" accept="image/*"></div>
+      <div class="row">
+        <div><label for="pp-size">Size</label>
+          <select id="pp-size">
+            <option value="413x531">35 × 45 mm (Nigeria, UK, EU)</option>
+            <option value="600x600">2 × 2 in (US, Canada)</option>
+            <option value="413x626">35 × 53 mm</option>
+            <option value="591x827">50 × 70 mm</option>
+          </select></div>
+        <div><label for="pp-bg">Background</label><input type="color" id="pp-bg" value="#ffffff"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="pp-remove" checked> Remove original background</label>
+      <div><label for="pp-zoom">Zoom</label><input type="range" id="pp-zoom" min="0.6" max="2.5" step="0.01" value="1"></div>
+      <div class="row">
+        <div><label for="pp-x">Move left / right</label><input type="range" id="pp-x" min="-50" max="50" value="0"></div>
+        <div><label for="pp-y">Move up / down</label><input type="range" id="pp-y" min="-50" max="50" value="0"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="pp-tone" checked> Light brightness clean-up</label>
+      <div class="result-actions"><button class="btn" id="pp-dl" disabled>Download</button></div>
+      <p class="note">First background removal downloads a small AI model (about 40 MB). Later runs are fast.</p>
+    </div>
+    <div class="stage"><div class="empty" id="pp-empty">Upload a clear, front-facing photo with good light.</div><canvas id="pp-canvas" hidden></canvas>
+      <div class="loading" id="pp-load"><div class="spin"></div><span id="pp-loadtxt">Working…</span></div></div>
+  </div>
+
+  <!-- ENHANCE -->
+  <div class="panel" id="p-enhance">
+    <div class="controls">
+      <h3>Fix a blurry photo</h3>
+      <p class="hint">Sharpens soft edges, reduces noise and enlarges the image. Your face and details are not redrawn, so resemblance stays 100%.</p>
+      <div><label for="en-file">Upload your blurry photo</label><input type="file" id="en-file" accept="image/*"></div>
+      <div><label for="en-str">Sharpening strength</label><input type="range" id="en-str" min="0.5" max="3" step="0.1" value="1.6"></div>
+      <div><label for="en-scale">Enlarge</label>
+        <select id="en-scale"><option value="1">Keep size</option><option value="2" selected>2×</option><option value="3">3×</option></select></div>
+      <button class="btn" id="en-run" disabled>Enhance photo</button>
+      <div class="result-actions"><button class="btn flash" id="en-dl" disabled>Download</button></div>
+    </div>
+    <div class="stage"><div class="empty" id="en-empty">Your enhanced photo will appear here.</div><canvas id="en-canvas" hidden></canvas>
+      <div class="loading" id="en-load"><div class="spin"></div><span>Enhancing…</span></div></div>
+  </div>
+
+  <!-- IPHONE -->
+  <div class="panel" id="p-iphone">
+    <div class="controls">
+      <h3>iPhone camera look</h3>
+      <p class="hint">Balances exposure, adds punchy but natural colour, crisp detail and the clean tone of a flagship phone. No face changes.</p>
+      <div><label for="ip-file">Upload your photo</label><input type="file" id="ip-file" accept="image/*"></div>
+      <div><label for="ip-str">Look strength</label><input type="range" id="ip-str" min="0.5" max="1.5" step="0.05" value="1"></div>
+      <div><label for="ip-scale">Enlarge</label>
+        <select id="ip-scale"><option value="1">Keep size</option><option value="2" selected>2×</option></select></div>
+      <button class="btn" id="ip-run" disabled>Apply iPhone look</button>
+      <div class="result-actions"><button class="btn flash" id="ip-dl" disabled>Download</button></div>
+    </div>
+    <div class="stage"><div class="empty" id="ip-empty">Your photo will appear here.</div><canvas id="ip-canvas" hidden></canvas>
+      <div class="loading" id="ip-load"><div class="spin"></div><span>Processing…</span></div></div>
+  </div>
+
+  <!-- POSTER -->
+  <div class="panel" id="p-poster">
+    <div class="controls">
+      <h3>Poster &amp; flyer designer</h3>
+      <p class="hint">Fill in the details and Spoedit lays out a finished design. Change anything and it updates.</p>
+      <div><label for="po-title">Headline</label><input type="text" id="po-title" value="Annual Youth Conference"></div>
+      <div><label for="po-sub">Subheading</label><input type="text" id="po-sub" value="Rise. Learn. Lead."></div>
+      <div><label for="po-body">Details</label><textarea id="po-body">Join 500+ young people for a day of talks, workshops and networking. Free entry. Lunch provided.</textarea></div>
+      <div class="row">
+        <div><label for="po-date">Date &amp; time</label><input type="text" id="po-date" value="Sat, 15 Nov · 10am"></div>
+        <div><label for="po-venue">Venue</label><input type="text" id="po-venue" value="Eko Hotel, Lagos"></div>
+      </div>
+      <div><label for="po-contact">Contact</label><input type="text" id="po-contact" value="0912 415 4453"></div>
+      <div class="row">
+        <div><label for="po-style">Style</label>
+          <select id="po-style">
+            <option value="forest">Forest &amp; flash</option><option value="night">Midnight</option><option value="sun">Sunrise</option>
+            <option value="gold">Black &amp; gold</option><option value="clean">Clean light</option><option value="berry">Berry</option>
+          </select></div>
+        <div><label for="po-size">Format</label>
+          <select id="po-size"><option value="1240x1754">A4 flyer</option><option value="1080x1080">Square post</option><option value="1080x1920">Story</option></select></div>
+      </div>
+      <div><label for="po-img">Photo or logo (optional)</label><input type="file" id="po-img" accept="image/*"></div>
+      <div class="result-actions"><button class="btn flash" id="po-dl">Download</button></div>
+    </div>
+    <div class="stage"><canvas id="po-canvas"></canvas></div>
+  </div>
+
+  <!-- INVOICE -->
+  <div class="panel" id="p-invoice">
+    <div class="controls">
+      <h3>Invoice &amp; receipt maker</h3>
+      <p class="hint">Branded documents for your business. Download as PDF or image.</p>
+      <div class="row">
+        <div><label for="iv-type">Document</label><select id="iv-type"><option value="invoice">Invoice</option><option value="receipt">Receipt</option></select></div>
+        <div><label for="iv-cur">Currency</label><select id="iv-cur"><option value="₦">₦ Naira</option><option value="$">$ Dollar</option><option value="£">£ Pound</option><option value="€">€ Euro</option></select></div>
+      </div>
+      <div><label for="iv-co">Your company name</label><input type="text" id="iv-co" value="Bright Ventures Ltd"></div>
+      <div><label for="iv-addr">Company address</label><textarea id="iv-addr" style="min-height:64px">12 Market Road, Enugu</textarea></div>
+      <div class="row">
+        <div><label for="iv-phone">Phone</label><input type="text" id="iv-phone" value="0912 415 4453"></div>
+        <div><label for="iv-email">Email</label><input type="email" id="iv-email" value="hello@brightventures.ng"></div>
+      </div>
+      <div><label for="iv-logo">Logo (optional)</label><input type="file" id="iv-logo" accept="image/*"></div>
+      <div><label for="iv-client">Client name</label><input type="text" id="iv-client" value="Chinedu Okafor"></div>
+      <div><label for="iv-caddr">Client address</label><textarea id="iv-caddr" style="min-height:64px">5 Independence Layout, Enugu</textarea></div>
+      <div class="row">
+        <div><label for="iv-no">Number</label><input type="text" id="iv-no" value="INV-0001"></div>
+        <div><label for="iv-date">Date</label><input type="date" id="iv-date"></div>
+      </div>
+      <div id="iv-duewrap"><label for="iv-due">Due date</label><input type="date" id="iv-due"></div>
+      <div id="iv-methwrap" hidden><label for="iv-meth">Payment method</label><input type="text" id="iv-meth" value="Bank transfer"></div>
+      <div>
+        <label>Items</label>
+        <div class="itemhead"><span>Description</span><span>Qty</span><span>Price</span><span></span></div>
+        <div id="iv-items"></div>
+        <button type="button" class="btn alt" id="iv-add" style="margin-top:8px;padding:9px 14px">Add item</button>
+      </div>
+      <div class="row">
+        <div><label for="iv-vat">VAT %</label><input type="number" id="iv-vat" min="0" step="any" value="7.5"></div>
+        <div><label for="iv-disc">Discount</label><input type="number" id="iv-disc" min="0" step="any" value="0"></div>
+      </div>
+      <div><label for="iv-notes">Bank details / notes</label><textarea id="iv-notes">Bank: GTBank
+Account name: Bright Ventures Ltd
+Account no: 0123456789</textarea></div>
+      <div class="row">
+        <div><label for="iv-color">Brand colour</label><input type="color" id="iv-color" value="#0e6b4a"></div>
+        <div><label for="iv-fmt">Format</label><select id="iv-fmt"><option value="pdf">PDF</option><option value="png">Image (PNG)</option></select></div>
+      </div>
+      <div class="result-actions"><button class="btn flash" id="iv-dl">Download</button></div>
+    </div>
+    <div class="stage"><canvas id="iv-canvas"></canvas></div>
+  </div>
+
+  <!-- ID CARD -->
+  <div class="panel" id="p-idcard">
+    <div class="controls">
+      <h3>ID card maker</h3>
+      <p class="guard"><b>For organisations only.</b> Make staff, student, member and event cards. Government-style cards (NIN, passport, driver's licence, voter's card) are not supported.</p>
+      <div><label for="id-type">Card type</label>
+        <select id="id-type"><option>Staff ID</option><option>Student ID</option><option>Member ID</option><option>Event pass</option></select></div>
+      <div><label for="id-org">Organisation name</label><input type="text" id="id-org" value="Bright Ventures Ltd"></div>
+      <div><label for="id-oaddr">Organisation address / return to</label><textarea id="id-oaddr" style="min-height:64px">12 Market Road, Enugu</textarea></div>
+      <div class="row">
+        <div><label for="id-logo">Logo</label><input type="file" id="id-logo" accept="image/*"></div>
+        <div><label for="id-photo">Person's photo</label><input type="file" id="id-photo" accept="image/*"></div>
+      </div>
+      <div><label for="id-name">Full name</label><input type="text" id="id-name" value="Ada Nwosu"></div>
+      <div><label for="id-role">Role / department / class</label><input type="text" id="id-role" value="Operations Manager"></div>
+      <div class="row">
+        <div><label for="id-no">ID number</label><input type="text" id="id-no" value="BV-2026-0142"></div>
+        <div><label for="id-phone">Phone</label><input type="text" id="id-phone" value="0912 415 4453"></div>
+      </div>
+      <div class="row">
+        <div><label for="id-issue">Issued</label><input type="date" id="id-issue"></div>
+        <div><label for="id-exp">Expires</label><input type="date" id="id-exp"></div>
+      </div>
+      <div><label for="id-email">Email (optional)</label><input type="email" id="id-email" value=""></div>
+      <div><label for="id-color">Card colour</label><input type="color" id="id-color" value="#0e6b4a"></div>
+      <div class="result-actions"><button class="btn flash" id="id-dl">Download front &amp; back</button></div>
+      <div class="msg err" id="id-msg"></div>
+    </div>
+    <div class="stage"><canvas id="id-canvas"></canvas></div>
+  </div>
+
+  <!-- DOCUMENT -->
+  <div class="panel" id="p-doc">
+    <div class="controls">
+      <h3>Edit your document</h3>
+      <p class="hint">Upload a .docx or .txt file, write what you want changed, and apply. Review and fine-tune the text on the right.</p>
+      <div><label for="dc-file">Upload document (.docx, .txt)</label><input type="file" id="dc-file" accept=".docx,.txt,.md,.csv"></div>
+      <div><label for="dc-ins">Instructions (one per line)</label>
+        <textarea id="dc-ins" placeholder='replace "Lagos" with "Abuja"&#10;remove extra spaces&#10;delete lines containing "draft"&#10;uppercase&#10;title case'></textarea></div>
+      <button class="btn" id="dc-run" disabled>Apply instructions</button>
+      <div class="result-actions"><button class="btn flash" id="dc-dl" disabled>Download (.doc)</button></div>
+      <p class="note">Need a complex edit (layout, tables, PDF)? <a id="docWa" href="#" target="_blank" rel="noopener">Send it to us on WhatsApp</a>.</p>
+    </div>
+    <div class="docbox"><label for="dc-text">Document text</label><textarea id="dc-text" placeholder="Your document text appears here. You can also type or edit directly."></textarea><div class="msg" id="dc-msg"></div></div>
+  </div>
+</section>
+
+<section class="wrap how">
+  <h2>How it works</h2>
+  <div class="steps">
+    <div><h3>Upload</h3><p>Choose a tool and add your photo, details or document.</p></div>
+    <div><h3>Preview</h3><p>See the result right away and adjust it.</p></div>
+    <div><h3>Pay on WhatsApp</h3><p>Tap Pay on WhatsApp and send the message. We confirm your payment in minutes.</p></div>
+    <div><h3>Download</h3><p>Tap "I've paid" and download without a watermark.</p></div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap">
+  <div><b>Spoedit</b> · Photos, posters and documents done right.</div>
+  <div>WhatsApp: <a id="footWa" href="#" target="_blank" rel="noopener">0912 415 4453</a></div>
+</div></footer>
+
+<!-- PAY MODAL -->
+<div class="modal" id="pay" role="dialog" aria-modal="true" aria-labelledby="pay-h">
+  <div class="card">
+    <button class="close" id="pay-x" aria-label="Close">&times;</button>
+    <h3 id="pay-h">Download without watermark</h3>
+    <p id="pay-top" class="note"></p>
+    <ol>
+      <li>Tap <b>Pay on WhatsApp</b> and send the message.</li>
+      <li>Pay using the account details we reply with.</li>
+      <li>We confirm your payment, usually within minutes.</li>
+      <li>Come back here and tap <b>I've paid</b>.</li>
+    </ol>
+    <label for="pay-phone">Your WhatsApp number (optional)</label>
+    <input type="text" id="pay-phone" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel">
+    <button class="btn" id="pay-wa" style="width:100%;margin-top:12px">Pay on WhatsApp</button>
+    <div class="msg" id="pay-ref"></div>
+    <div class="divider"></div>
+    <button class="btn flash" id="pay-check" style="width:100%">I've paid, check my payment</button>
+    <div class="msg" id="pay-msg" role="status"></div>
+  </div>
+</div>
+
+<script>
+/* =====================  CONFIG  ===================== */
+const WHATSAPP = "2349124154453";   // 09124154453 in international format
+/* Prices, free trials, bans and payments live on the server. Change prices in /admin. */
+const $ = s => document.querySelector(s);
+const wa = (text) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
+$('#heroWa').href = wa("Hello Spoedit, I have a question.");
+$('#footWa').href = wa("Hello Spoedit, I have a question.");
+$('#docWa').href = wa("Hello Spoedit, I need help editing a document.");
+
+const naira = n => '₦' + Number(n).toLocaleString('en-NG');
+const msg = (el, cls, t) => { el.className = 'msg ' + cls; el.textContent = t; };
+let currentTool = 'passport';
+const toolNames = {passport:'Passport photo',enhance:'Blurry photo fix',iphone:'iPhone look',poster:'Poster design',invoice:'Invoice / receipt',idcard:'ID card',doc:'Document edit'};
+
+/* ---------- visitor identity + server state ---------- */
+let uid = localStorage.getItem('spo_uid');
+if(!uid){ uid = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(16)+Math.random().toString(16).slice(2)+'0000000000000000').slice(0,40); localStorage.setItem('spo_uid',uid); }
+const ME = {free:0, credits:{}, banned:false, prices:{}, ready:false, error:null};
+async function api(path, body){
+  const r = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','x-uid':uid},body:JSON.stringify(body||{})});
+  let data = {}; try{ data = await r.json(); }catch{}
+  return {status:r.status, ok:r.ok, data};
+}
+async function loadMe(){
+  try{ const r = await api('/api/me'); if(r.ok) Object.assign(ME, r.data, {ready:true, error:null}); else ME.error = r.data.error || 'error'; }
+  catch(e){ ME.error = 'network'; }
+  updateBadge(); paintPrices(); return ME;
+}
+const credits = t => (ME.credits && ME.credits[t]) || 0;
+const wmOn = () => !(credits(currentTool) > 0);
+function updateBadge(){
+  const b = $('#badge');
+  if(ME.error==='db_not_configured') b.textContent = 'Setup in progress';
+  else if(ME.banned) b.textContent = 'Account suspended';
+  else { const paid = credits(currentTool); b.innerHTML = paid>0 ? `Paid downloads here: <b>${paid}</b>` : `Free trials left: <b>${ME.free||0}</b>`; }
+}
+function paintPrices(){
+  document.querySelectorAll('[data-price]').forEach(el=>{ const p = ME.prices[el.dataset.price]; el.textContent = p===undefined ? '' : naira(p); });
+  document.querySelectorAll('.panel').forEach(pn=>{
+    const t = pn.id.slice(2); let s = pn.querySelector('.pricetag');
+    if(!s){ const ra = pn.querySelector('.result-actions'); if(!ra) return; s = document.createElement('span'); s.className = 'pricetag'; ra.appendChild(s); }
+    const pr = ME.prices[t]; s.textContent = pr===undefined ? '' : `${naira(pr)} per clean download`;
+  });
+}
+
+/* ---------- payment modal ---------- */
+let payTimer = null;
+function openPay(){
+  const t = currentTool, pr = ME.prices[t];
+  $('#pay-top').textContent = `${toolNames[t]}: ${pr!==undefined ? naira(pr) : ''} per clean download.` + (ME.free>0 ? '' : ' Your free trials are used up.');
+  msg($('#pay-msg'),'',''); msg($('#pay-ref'),'',''); $('#pay-phone').value = localStorage.getItem('spo_phone') || '';
+  $('#pay').classList.add('on'); clearInterval(payTimer); payTimer = setInterval(()=>checkPay(true), 15000);
+}
+function closePay(){ $('#pay').classList.remove('on'); clearInterval(payTimer); }
+$('#pay-x').onclick = closePay;
+$('#pay').addEventListener('click', e => { if(e.target.id==='pay') closePay(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') closePay(); });
+$('#pay-wa').onclick = async () => {
+  const btn = $('#pay-wa'), phone = $('#pay-phone').value.trim(); if(phone) localStorage.setItem('spo_phone', phone);
+  const w = window.open('', '_blank'); btn.disabled = true;
+  const r = await api('/api/pay',{service:currentTool, phone}).catch(()=>null);
+  btn.disabled = false;
+  if(!r || !r.ok){
+    if(w) w.close();
+    msg($('#pay-msg'),'err', r&&r.status===403 ? 'Your account is suspended. Please contact us on WhatsApp.' : r&&r.status===429 ? 'Too many requests. Try again later.' : 'Could not start the payment. Check your connection and try again.');
+    return;
+  }
+  const url = wa(`Hello Spoedit, I want to pay ${naira(r.data.amount)} for: ${toolNames[currentTool]}. Ref: ${r.data.ref}. Please send payment details.`);
+  msg($('#pay-ref'),'ok',`Your reference: ${r.data.ref}`);
+  if(w) w.location.href = url;
+  else { const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' Open WhatsApp'; $('#pay-ref').appendChild(a); }
+};
+async function checkPay(silent){
+  await loadMe();
+  if(credits(currentTool) > 0){ msg($('#pay-msg'),'ok','Payment confirmed! Tap Download to get your clean file.'); refreshAll(); setTimeout(closePay,1600); }
+  else if(!silent) msg($('#pay-msg'),'err','Not confirmed yet. We confirm once we see your payment. Try again in a few minutes.');
+}
+$('#pay-check').onclick = () => checkPay(false);
+
+/* The server decides: paid credit (clean) > free trial (watermark) > ask to pay */
+async function exportFlow(doExport){
+  if(!ME.ready) await loadMe();
+  if(ME.error==='db_not_configured'){ alert('This site is still being set up. Please try again later.'); return; }
+  let r; try{ r = await api('/api/consume',{service:currentTool}); }catch(e){ alert('Network problem. Check your connection and try again.'); return; }
+  if(r.status===403){ ME.banned = true; updateBadge(); alert('Your account has been suspended. Contact us on WhatsApp if you think this is a mistake.'); return; }
+  if(r.status===402){ await loadMe(); openPay(); return; }
+  if(!r.ok){ alert('Something went wrong. Please try again.'); return; }
+  try{ await doExport(r.data.watermark); }catch(e){ console.error(e); alert('The download failed. Please try again.'); }
+  await loadMe(); refreshAll(); confetti();
+}
+
+/* ---------- helpers ---------- */
+function loadImage(file){
+  return new Promise((res,rej)=>{
+    const url = URL.createObjectURL(file); const img = new Image();
+    img.onload = ()=>res(img); img.onerror = ()=>rej(new Error('Could not read this image.')); img.src = url;
+  });
+}
+function mkCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+function saveCanvas(c, name, type='image/jpeg'){
+  c.toBlob(b=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }, type, .95);
+}
+function drawWatermark(c){
+  const ctx=c.getContext('2d'), w=c.width, h=c.height, fs=Math.max(18,Math.round(Math.min(w,h)/14));
+  ctx.save(); ctx.globalAlpha=.28; ctx.fillStyle='#000'; ctx.font=`800 ${fs}px "Bricolage Grotesque",Arial`;
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.translate(w/2,h/2); ctx.rotate(-Math.PI/6);
+  const step=fs*3.2, diag=Math.hypot(w,h);
+  for(let y=-diag;y<diag;y+=step) for(let x=-diag;x<diag;x+=fs*9){ ctx.fillText('SPOEDIT · FREE TRIAL', x+((Math.round(y/step)%2)*fs*4.5), y); }
+  ctx.restore();
+  ctx.fillStyle='rgba(14,107,74,.92)'; const bh=fs*1.1; ctx.fillRect(0,h-bh,w,bh);
+  ctx.fillStyle='#fff'; ctx.font=`700 ${fs*.5}px Arial`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('Made with Spoedit (free trial)', w/2, h-bh/2);
+}
+function show(prefix, canvas){ $('#'+prefix+'-empty')?.setAttribute('hidden',''); canvas.hidden=false; }
+function busy(id,on,txt){ const el=$('#'+id); el.classList.toggle('on',on); if(txt) el.querySelector('span').textContent=txt; }
+const tick = () => new Promise(r=>setTimeout(r,30));
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  $('#p-'+t.dataset.t).classList.add('on'); currentTool=t.dataset.t;
+  updateBadge(); refreshAll();
+});
+
+/* =====================  PASSPORT  ===================== */
+const PP = {img:null, cut:null, file:null};
+async function ppRender(wm){
+  const base = PP.cut || PP.img; if(!base) return null;
+  const [W,H] = $('#pp-size').value.split('x').map(Number);
+  const c = mkCanvas(W,H), ctx = c.getContext('2d');
+  ctx.fillStyle = $('#pp-bg').value; ctx.fillRect(0,0,W,H);
+  const zoom=+$('#pp-zoom').value, ox=+$('#pp-x').value/100*W, oy=+$('#pp-y').value/100*H;
+  const iw=base.width||base.naturalWidth, ih=base.height||base.naturalHeight;
+  const s = Math.max(W/iw, H/ih)*zoom;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(base, W/2-iw*s/2+ox, H/2-ih*s/2+oy, iw*s, ih*s);
+  if($('#pp-tone').checked){ const d=ctx.getImageData(0,0,W,H); autoLevels(d,.5); ctx.putImageData(d,0,0); }
+  if(wm) drawWatermark(c);
+  return c;
+}
+async function ppShow(){ const c=await ppRender(wmOn()); if(!c) return; const out=$('#pp-canvas'); out.width=c.width; out.height=c.height; out.getContext('2d').drawImage(c,0,0); show('pp',out); $('#pp-dl').disabled=false; }
+$('#pp-file').onchange = async e => {
+  const f=e.target.files[0]; if(!f) return; PP.cut=null; PP.file=f;
+  try{ PP.img=await loadImage(f); }catch(err){ alert(err.message); return; }
+  await ppProcess();
+};
+async function ppProcess(){
+  PP.cut=null;
+  if($('#pp-remove').checked && PP.file){
+    busy('pp-load',true,'Removing background… first run downloads the AI model, please wait.');
+    try{
+      const mod = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
+      const blob = await mod.removeBackground(PP.file);
+      PP.cut = await loadImage(blob);
+    }catch(err){ console.error(err); alert('Background removal could not load (check your internet). Showing original background instead.'); $('#pp-remove').checked=false; }
+    busy('pp-load',false);
+  }
+  await ppShow();
+}
+['pp-size','pp-bg','pp-zoom','pp-x','pp-y','pp-tone'].forEach(id=>$('#'+id).addEventListener('input',ppShow));
+$('#pp-remove').onchange = () => { if(PP.file) ppProcess(); };
+$('#pp-dl').onclick = () => exportFlow(async wm => { const c=await ppRender(wm); saveCanvas(c,'spoedit-passport.jpg'); });
+
+/* =====================  PIXEL TOOLS  ===================== */
+function autoLevels(d, clip=.5){
+  const p=d.data, hist=new Uint32Array(256), n=p.length/4;
+  for(let i=0;i<p.length;i+=4) hist[(p[i]*.299+p[i+1]*.587+p[i+2]*.114)|0]++;
+  let lo=0,hi=255,acc=0,t=n*clip/100;
+  while(lo<255&&(acc+=hist[lo])<t) lo++; acc=0;
+  while(hi>0&&(acc+=hist[hi])<t) hi--;
+  if(hi-lo<30) return;
+  const k=255/(hi-lo);
+  for(let i=0;i<p.length;i+=4){ p[i]=(p[i]-lo)*k; p[i+1]=(p[i+1]-lo)*k; p[i+2]=(p[i+2]-lo)*k; }
+}
+function adjust(d,{contrast=1,sat=1,bright=0,warm=0}){
+  const p=d.data;
+  for(let i=0;i<p.length;i+=4){
+    let r=p[i],g=p[i+1],b=p[i+2];
+    r+=bright+warm; b+=bright-warm; g+=bright;
+    r=(r-128)*contrast+128; g=(g-128)*contrast+128; b=(b-128)*contrast+128;
+    const l=r*.299+g*.587+b*.114;
+    p[i]=l+(r-l)*sat; p[i+1]=l+(g-l)*sat; p[i+2]=l+(b-l)*sat;
+  }
+}
+/* 3x3 box blur then unsharp mask; also mild denoise on flat areas */
+function sharpen(d, amount){
+  const w=d.width,h=d.height,src=d.data,out=new Uint8ClampedArray(src);
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      const i=(y*w+x)*4;
+      for(let c=0;c<3;c++){
+        let s=0;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++) s+=src[((y+dy)*w+x+dx)*4+c];
+        const blur=s/9, diff=src[i+c]-blur;
+        const gate = Math.abs(diff)<3 ? 0.35 : 1;      // don't amplify noise
+        out[i+c]=src[i+c]+diff*amount*gate;
+      }
+    }
+  }
+  d.data.set(out);
+}
+function upscale(img, factor, maxSide=4000){
+  let w=(img.naturalWidth||img.width)*factor, h=(img.naturalHeight||img.height)*factor;
+  const m=Math.max(w,h); if(m>maxSide){ const r=maxSide/m; w*=r; h*=r; }
+  const c=mkCanvas(Math.round(w),Math.round(h)), ctx=c.getContext('2d');
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  // step-wise upscaling gives smoother results than one big jump
+  let cur=img, cw=img.naturalWidth||img.width, ch=img.naturalHeight||img.height;
+  while(cw*1.5<c.width){ const t=mkCanvas(Math.round(cw*1.5),Math.round(ch*1.5)); const tc=t.getContext('2d'); tc.imageSmoothingQuality='high'; tc.drawImage(cur,0,0,t.width,t.height); cur=t; cw=t.width; ch=t.height; }
+  ctx.drawImage(cur,0,0,c.width,c.height);
+  return c;
+}
+
+function photoTool(p, mode){
+  const T={img:null,result:null};
+  $('#'+p+'-file').onchange = async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{ T.img=await loadImage(f); }catch(err){ alert(err.message); return; }
+    T.result=null; $('#'+p+'-run').disabled=false; $('#'+p+'-dl').disabled=true;
+    const c=$('#'+p+'-canvas'); c.width=T.img.naturalWidth; c.height=T.img.naturalHeight; c.getContext('2d').drawImage(T.img,0,0); show(p,c);
+  };
+  $('#'+p+'-run').onclick = async ()=>{
+    if(!T.img) return; busy(p+'-load',true); await tick();
+    const f=+$('#'+p+'-scale').value, s=+$('#'+p+'-str').value;
+    const c=upscale(T.img,f), ctx=c.getContext('2d'), d=ctx.getImageData(0,0,c.width,c.height);
+    if(mode==='enhance'){ sharpen(d,s); sharpen(d,s*.5); autoLevels(d,.2); adjust(d,{contrast:1.04,sat:1.04}); }
+    else { autoLevels(d,.35); adjust(d,{contrast:1+.12*s,sat:1+.18*s,bright:4*s,warm:2*s}); sharpen(d,.9*s); }
+    ctx.putImageData(d,0,0); T.result=c; busy(p+'-load',false); $('#'+p+'-dl').disabled=false; paint();
+  };
+  function paint(){
+    if(!T.result) return; const out=$('#'+p+'-canvas'); out.width=T.result.width; out.height=T.result.height;
+    const ctx=out.getContext('2d'); ctx.drawImage(T.result,0,0); if(wmOn()) drawWatermark(out); show(p,out);
+  }
+  $('#'+p+'-dl').onclick=()=>exportFlow(wm=>{ const c=mkCanvas(T.result.width,T.result.height); c.getContext('2d').drawImage(T.result,0,0); if(wm) drawWatermark(c); saveCanvas(c,`spoedit-${mode}.jpg`); });
+  return paint;
+}
+const paintEnhance = photoTool('en','enhance');
+const paintIphone  = photoTool('ip','iphone');
+
+/* =====================  POSTER  ===================== */
+const THEMES={
+  forest:{bg:['#0a4d35','#0e6b4a'],text:'#ffffff',accent:'#ffd23f',panel:'rgba(0,0,0,.22)'},
+  night:{bg:['#10123a','#2a1b6b'],text:'#ffffff',accent:'#7ee0ff',panel:'rgba(255,255,255,.08)'},
+  sun:{bg:['#ff7a18','#ffbf3f'],text:'#2b1200',accent:'#ffffff',panel:'rgba(255,255,255,.28)'},
+  gold:{bg:['#0c0c0c','#1f1a10'],text:'#f6ecd0',accent:'#d9a93a',panel:'rgba(217,169,58,.12)'},
+  clean:{bg:['#ffffff','#eef3ef'],text:'#12201a',accent:'#0e6b4a',panel:'rgba(14,107,74,.08)'},
+  berry:{bg:['#4a0d3b','#a31d5a'],text:'#fff2f8',accent:'#ffd0e6',panel:'rgba(0,0,0,.2)'}
+};
+let posterImg=null;
+$('#po-img').onchange=async e=>{ const f=e.target.files[0]; posterImg=f?await loadImage(f):null; drawPoster(); };
+function wrap(ctx,text,x,y,maxW,lh,maxLines=99){
+  const words=String(text).split(/\s+/); let line='',lines=[];
+  for(const w of words){ const t=line?line+' '+w:w; if(ctx.measureText(t).width>maxW&&line){ lines.push(line); line=w; } else line=t; }
+  if(line) lines.push(line); lines=lines.slice(0,maxLines);
+  lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh)); return {y:y+lines.length*lh,n:lines.length};
+}
+function posterRender(wm){
+  const [W,H]=$('#po-size').value.split('x').map(Number), th=THEMES[$('#po-style').value];
+  const c=mkCanvas(W,H), ctx=c.getContext('2d'), m=W*.08, inner=W-2*m, u=W/1000;
+  const g=ctx.createLinearGradient(0,0,W,H); g.addColorStop(0,th.bg[0]); g.addColorStop(1,th.bg[1]); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // decorative shapes
+  ctx.fillStyle=th.accent; ctx.globalAlpha=.14; ctx.beginPath(); ctx.arc(W*.95,H*.04,W*.34,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(W*.02,H*.98,W*.28,0,7); ctx.fill(); ctx.globalAlpha=1;
+  ctx.fillStyle=th.accent; ctx.fillRect(m,m*.9,W*.14,10*u);
+  let y=m*1.6;
+  if(posterImg){
+    const ih=H*(H>W*1.3?.3:.28), iw=inner; ctx.save(); ctx.beginPath(); ctx.roundRect(m,y,iw,ih,24*u); ctx.clip();
+    const s=Math.max(iw/posterImg.naturalWidth, ih/posterImg.naturalHeight);
+    ctx.drawImage(posterImg,m+iw/2-posterImg.naturalWidth*s/2,y+ih/2-posterImg.naturalHeight*s/2,posterImg.naturalWidth*s,posterImg.naturalHeight*s); ctx.restore();
+    y+=ih+60*u;
+  }
+  ctx.textBaseline='top'; ctx.textAlign='left'; ctx.fillStyle=th.text;
+  // title: shrink to fit in max 4 lines
+  const title=($('#po-title').value||'Your headline').toUpperCase(); let fs=W*(posterImg?.088:.115);
+  const maxTitleH=H*(posterImg?.22:.3);
+  for(;fs>28*u;fs-=3){ ctx.font=`800 ${fs}px "Bricolage Grotesque",Arial Black,sans-serif`; const words=title.split(' ');let lines=1,l='';for(const w of words){const t=l?l+' '+w:w;if(ctx.measureText(t).width>inner&&l){lines++;l=w}else l=t} if(lines*fs*1.02<=maxTitleH&&lines<=4)break; }
+  y=wrap(ctx,title,m,y,inner,fs*1.02).y+22*u;
+  ctx.fillStyle=th.accent; ctx.font=`700 ${W*.04}px "DM Sans",Arial`; y=wrap(ctx,$('#po-sub').value,m,y,inner,W*.05).y+34*u;
+  ctx.fillStyle=th.text; ctx.globalAlpha=.9; ctx.font=`400 ${W*.032}px "DM Sans",Arial`; y=wrap(ctx,$('#po-body').value,m,y,inner,W*.047,posterImg?4:7).y+30*u; ctx.globalAlpha=1;
+  // info panel at bottom
+  const rows=[['WHEN',$('#po-date').value],['WHERE',$('#po-venue').value],['CALL',$('#po-contact').value]].filter(r=>r[1]);
+  const rh=W*.075, ph=rows.length*rh+40*u, py=H-m*.9-ph-(wm?0:0);
+  ctx.fillStyle=th.panel; ctx.beginPath(); ctx.roundRect(m,py,inner,ph,22*u); ctx.fill();
+  rows.forEach((r,i)=>{ const ry=py+20*u+i*rh; ctx.fillStyle=th.accent; ctx.font=`700 ${W*.026}px "DM Sans",Arial`; ctx.fillText(r[0],m+26*u,ry+rh*.2);
+    ctx.fillStyle=th.text; ctx.font=`700 ${W*.036}px "DM Sans",Arial`; ctx.fillText(r[1],m+26*u+W*.14,ry+rh*.12); });
+  if(wm) drawWatermark(c);
+  return c;
+}
+function drawPoster(){ const c=posterRender(wmOn()), out=$('#po-canvas'); out.width=c.width; out.height=c.height; out.getContext('2d').drawImage(c,0,0); }
+['po-title','po-sub','po-body','po-date','po-venue','po-contact','po-style','po-size'].forEach(id=>$('#'+id).addEventListener('input',drawPoster));
+$('#po-dl').onclick=()=>exportFlow(wm=>saveCanvas(posterRender(wm),'spoedit-poster.png','image/png'));
+
+/* =====================  DOCUMENT  ===================== */
+let docName='document';
+$('#dc-file').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return; docName=f.name.replace(/\.[^.]+$/,'');
+  const msg=$('#dc-msg'); msg.className='msg'; msg.textContent='Reading file…';
+  try{
+    if(/\.docx$/i.test(f.name)){ const r=await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()}); $('#dc-text').value=r.value; }
+    else $('#dc-text').value=await f.text();
+    msg.textContent='File loaded. Write your instructions and tap Apply.'; $('#dc-run').disabled=false; $('#dc-dl').disabled=false;
+  }catch(err){ msg.className='msg err'; msg.textContent='Could not read this file. Try a .docx or .txt file.'; }
+};
+$('#dc-text').addEventListener('input',()=>{ $('#dc-dl').disabled=!$('#dc-text').value.trim(); });
+$('#dc-run').onclick=()=>{
+  let t=$('#dc-text').value, applied=[], bad=[];
+  $('#dc-ins').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(line=>{
+    let m;
+    if((m=line.match(/^(?:replace|change)\s+["“'](.+?)["”']\s+(?:with|to)\s+["“'](.*?)["”']$/i))){ const n=t.split(m[1]).length-1; t=t.split(m[1]).join(m[2]); applied.push(`${n}× "${m[1]}" → "${m[2]}"`); }
+    else if((m=line.match(/^(?:delete|remove)\s+lines?\s+containing\s+["“'](.+?)["”']$/i))){ t=t.split('\n').filter(l=>!l.toLowerCase().includes(m[1].toLowerCase())).join('\n'); applied.push(`deleted lines with "${m[1]}"`); }
+    else if(/^remove\s+extra\s+spaces?/i.test(line)){ t=t.replace(/[ \t]{2,}/g,' ').replace(/^[ \t]+|[ \t]+$/gm,''); applied.push('extra spaces removed'); }
+    else if(/^remove\s+(?:blank|empty)\s+lines?/i.test(line)){ t=t.replace(/\n\s*\n+/g,'\n'); applied.push('blank lines removed'); }
+    else if(/^upper\s?case/i.test(line)){ t=t.toUpperCase(); applied.push('UPPERCASE'); }
+    else if(/^lower\s?case/i.test(line)){ t=t.toLowerCase(); applied.push('lowercase'); }
+    else if(/^(?:title|capitali[sz]e)/i.test(line)){ t=t.toLowerCase().replace(/(^|[\s(\-])([a-z])/g,(_,a,b)=>a+b.toUpperCase()); applied.push('Title Case'); }
+    else if(/^sentence\s?case/i.test(line)){ t=t.toLowerCase().replace(/(^\s*|[.!?]\s+)([a-z])/g,(_,a,b)=>a+b.toUpperCase()); applied.push('Sentence case'); }
+    else bad.push(line);
+  });
+  $('#dc-text').value=t;
+  const msg=$('#dc-msg');
+  msg.className = bad.length?'msg err':'msg ok';
+  msg.textContent = (applied.length?'Applied: '+applied.join('; ')+'. ':'') + (bad.length?`Couldn't apply: "${bad.join('", "')}". Edit the text directly or send these to us on WhatsApp.`:'');
+  $('#dc-dl').disabled=false;
+};
+$('#dc-dl').onclick=()=>exportFlow(wm=>{
+  let t=$('#dc-text').value; if(wm) t+='\n\n— Edited with Spoedit (free trial). Get clean files at spoedit —';
+  const esc=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split(/\n/).map(l=>`<p style="margin:0 0 8pt;font-family:Calibri,Arial;font-size:11pt">${l||'&nbsp;'}</p>`).join('');
+  const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"></head><body>${esc}</body></html>`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff',html],{type:'application/msword'})); a.download=`${docName}-spoedit.doc`; document.body.appendChild(a); a.click(); a.remove();
+});
+
+/* refresh previews after credits change (so watermark disappears once unlocked) */
+function refreshAll(){ if(PP.img) ppShow(); paintEnhance(); paintIphone(); drawPoster(); drawInvoice(); drawIdCard(); }
+drawPoster();
+
+/* =====================  INVOICE / RECEIPT  ===================== */
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const INV={items:[{d:'Website design',q:1,p:150000},{d:'Hosting (12 months)',q:1,p:30000}],logo:null};
+$('#iv-date').value=new Date().toISOString().slice(0,10);
+$('#iv-due').value=new Date(Date.now()+12096e5).toISOString().slice(0,10);
+const fmtDate=d=>d?new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+function wrapP(ctx,text,x,y,w,lh,max=99){ let n=0; for(const par of String(text||'').split('\n')){ if(n>=max)break; if(!par.trim()){y+=lh/2;continue;} const r=wrap(ctx,par,x,y,w,lh,max-n); y=r.y; n+=r.n; } return {y}; }
+function invList(){
+  const box=$('#iv-items'); box.innerHTML='';
+  INV.items.forEach((it,i)=>{
+    const r=document.createElement('div'); r.className='itemrow';
+    r.innerHTML=`<input type="text" data-k="d" aria-label="Item description" placeholder="Description" value="${esc(it.d)}"><input type="number" data-k="q" min="0" step="any" aria-label="Quantity" value="${it.q}"><input type="number" data-k="p" min="0" step="any" aria-label="Unit price" value="${it.p}"><button type="button" class="x" aria-label="Remove item">&times;</button>`;
+    r.querySelectorAll('input').forEach(inp=>inp.oninput=()=>{ it[inp.dataset.k]=inp.dataset.k==='d'?inp.value:+inp.value; drawInvoice(); });
+    r.querySelector('.x').onclick=()=>{ INV.items.splice(i,1); invList(); drawInvoice(); };
+    box.appendChild(r);
+  });
+}
+$('#iv-add').onclick=()=>{ if(INV.items.length>=14) return alert('You can add up to 14 items on one page.'); INV.items.push({d:'',q:1,p:0}); invList(); drawInvoice(); };
+$('#iv-logo').onchange=async e=>{ const f=e.target.files[0]; INV.logo=f?await loadImage(f):null; drawInvoice(); };
+$('#iv-type').addEventListener('change',()=>{
+  const r=$('#iv-type').value==='receipt'; $('#iv-duewrap').hidden=r; $('#iv-methwrap').hidden=!r;
+  const n=$('#iv-no'); n.value=n.value.replace(/^(INV|RCT)/,r?'RCT':'INV'); drawInvoice();
+});
+function invRender(wm){
+  const W=1240,H=1754,m=90,c=mkCanvas(W,H),x=c.getContext('2d');
+  const acc=$('#iv-color').value, rec=$('#iv-type').value==='receipt', cur=$('#iv-cur').value;
+  const ink='#12201a', mut='#5a6b62', F='"DM Sans",Arial,sans-serif', FH='"Bricolage Grotesque","DM Sans",Arial,sans-serif';
+  const money=n=>cur+(+n||0).toLocaleString('en-NG',{minimumFractionDigits:2,maximumFractionDigits:2});
+  x.fillStyle='#fff'; x.fillRect(0,0,W,H); x.fillStyle=acc; x.fillRect(0,0,W,22); x.textBaseline='top'; x.textAlign='left';
+  let tx=m;
+  if(INV.logo){ const s=120/Math.max(INV.logo.naturalWidth,INV.logo.naturalHeight), lw=INV.logo.naturalWidth*s, lh=INV.logo.naturalHeight*s; x.drawImage(INV.logo,m,76,lw,lh); tx=m+lw+26; }
+  x.fillStyle=ink; x.font=`800 40px ${FH}`;
+  let y=wrap(x,$('#iv-co').value||'Your company',tx,76,520,46,2).y+6;
+  x.fillStyle=mut; x.font=`400 23px ${F}`;
+  y=wrapP(x,$('#iv-addr').value,tx,y,520,32,3).y;
+  [$('#iv-phone').value,$('#iv-email').value].filter(Boolean).forEach(t=>{ x.fillText(t,tx,y); y+=32; });
+  x.textAlign='right'; x.fillStyle=acc; x.font=`800 68px ${FH}`; x.fillText(rec?'RECEIPT':'INVOICE',W-m,70);
+  const meta=[[(rec?'Receipt':'Invoice')+' no.',$('#iv-no').value],['Date',fmtDate($('#iv-date').value)],rec?['Payment method',$('#iv-meth').value]:['Due date',fmtDate($('#iv-due').value)]];
+  let my=165; meta.forEach(([k,v])=>{ x.textAlign='left'; x.font=`400 23px ${F}`; x.fillStyle=mut; x.fillText(k,W-m-380,my); x.textAlign='right'; x.font=`700 25px ${F}`; x.fillStyle=ink; x.fillText(v||'-',W-m,my); my+=38; });
+  x.textAlign='left'; y=Math.max(y,my,300)+36;
+  x.fillStyle=mut; x.font=`700 22px ${F}`; x.fillText(rec?'Received from':'Bill to',m,y); y+=34;
+  x.fillStyle=ink; x.font=`800 32px ${FH}`; y=wrap(x,$('#iv-client').value||'Client name',m,y,600,38,2).y;
+  x.fillStyle=mut; x.font=`400 23px ${F}`; y=wrapP(x,$('#iv-caddr').value,m,y+2,600,32,3).y+40;
+  // table
+  x.fillStyle=acc; x.beginPath(); x.roundRect(m,y,W-2*m,60,12); x.fill();
+  const cQ=W-m-440, cP=W-m-250, cA=W-m-22;
+  x.fillStyle='#fff'; x.font=`700 23px ${F}`; x.textAlign='left'; x.fillText('Description',m+22,y+17);
+  x.textAlign='right'; x.fillText('Qty',cQ,y+17); x.fillText('Unit price',cP,y+17); x.fillText('Amount',cA,y+17); y+=60;
+  const items=INV.items.filter(i=>i.d||+i.p), rh=Math.min(72,Math.max(300,1180-y)/Math.max(items.length,1)); let sub=0;
+  items.forEach((it,i)=>{
+    const amt=(+it.q||0)*(+it.p||0); sub+=amt;
+    if(i%2===0){ x.fillStyle='#f4f8f5'; x.fillRect(m,y,W-2*m,rh); }
+    x.fillStyle=ink; x.font=`500 25px ${F}`; x.textAlign='left';
+    const orig=it.d||''; let d=orig; while(x.measureText(d).width>cQ-m-130&&d.length>1) d=d.slice(0,-1); if(d!==orig) d+='…';
+    const ty=y+rh/2-14; x.fillText(d,m+22,ty);
+    x.textAlign='right'; x.fillText(String(it.q),cQ,ty); x.fillText(money(it.p),cP,ty); x.font=`700 25px ${F}`; x.fillText(money(amt),cA,ty); y+=rh;
+  });
+  x.fillStyle=acc; x.fillRect(m,y,W-2*m,3); y+=30;
+  // totals
+  const disc=+$('#iv-disc').value||0, vr=+$('#iv-vat').value||0, base=Math.max(sub-disc,0), vat=base*vr/100, total=base+vat;
+  const lines=[['Subtotal',money(sub)]]; if(disc) lines.push(['Discount','-'+money(disc)]); if(vr) lines.push([`VAT (${vr}%)`,money(vat)]);
+  const bx=W-m-440;
+  lines.forEach(([k,v])=>{ x.textAlign='left'; x.font=`400 25px ${F}`; x.fillStyle=mut; x.fillText(k,bx,y); x.textAlign='right'; x.font=`700 25px ${F}`; x.fillStyle=ink; x.fillText(v,W-m-22,y); y+=44; });
+  y+=8; x.fillStyle=acc; x.beginPath(); x.roundRect(bx-24,y,482,84,14); x.fill();
+  x.fillStyle='#fff'; x.textAlign='left'; x.font=`700 25px ${F}`; x.fillText(rec?'Amount paid':'Total due',bx,y+29);
+  x.textAlign='right'; x.font=`800 36px ${FH}`; x.fillText(money(total),W-m-22,y+22);
+  if(rec){ x.save(); x.translate(m+190,y+10); x.rotate(-.22); x.strokeStyle=acc; x.fillStyle=acc; x.globalAlpha=.85; x.lineWidth=8; x.beginPath(); x.roundRect(-130,-60,260,120,18); x.stroke(); x.font=`800 78px ${FH}`; x.textAlign='center'; x.textBaseline='middle'; x.fillText('PAID',0,4); x.restore(); x.textBaseline='top'; }
+  // notes + footer
+  const ny=Math.max(y+150,H-430);
+  x.textAlign='left'; x.fillStyle=ink; x.font=`700 25px ${F}`; x.fillText(rec?'Notes':'Payment details & notes',m,ny);
+  x.fillStyle=mut; x.font=`400 23px ${F}`; wrapP(x,$('#iv-notes').value,m,ny+42,W-2*m,33,6);
+  x.fillStyle=acc; x.fillRect(m,H-150,W-2*m,2);
+  x.fillStyle=mut; x.font=`400 22px ${F}`; x.textAlign='center'; x.fillText('Thank you for your business.',W/2,H-122);
+  if(wm) drawWatermark(c);
+  return c;
+}
+function drawInvoice(){ const c=invRender(wmOn()), o=$('#iv-canvas'); o.width=c.width; o.height=c.height; o.getContext('2d').drawImage(c,0,0); }
+document.querySelectorAll('#p-invoice input,#p-invoice select,#p-invoice textarea').forEach(el=>el.addEventListener('input',drawInvoice));
+function canvasToPdf(c){
+  const jpg=Uint8Array.from(atob(c.toDataURL('image/jpeg',.92).split(',')[1]),ch=>ch.charCodeAt(0));
+  const enc=new TextEncoder(), parts=[], offs=[]; let len=0;
+  const push=v=>{ const b=typeof v==='string'?enc.encode(v):v; parts.push(b); len+=b.length; };
+  const obj=(n,body)=>{ offs[n]=len; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  push('%PDF-1.4\n');
+  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+  offs[4]=len; push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); push(jpg); push('\nendstream\nendobj\n');
+  const cs='q 595 0 0 842 0 0 cm /Im0 Do Q'; obj(5,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+  const xr=len; push('xref\n0 6\n0000000000 65535 f \n'); for(let i=1;i<=5;i++) push(String(offs[i]).padStart(10,'0')+' 00000 n \n');
+  push(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`);
+  return new Blob(parts,{type:'application/pdf'});
+}
+$('#iv-dl').onclick=()=>exportFlow(wm=>{
+  const c=invRender(wm), nm=($('#iv-type').value+'-'+($('#iv-no').value||'spoedit')).replace(/[^\w-]+/g,'_');
+  if($('#iv-fmt').value==='pdf'){ const a=document.createElement('a'); a.href=URL.createObjectURL(canvasToPdf(c)); a.download=nm+'.pdf'; document.body.appendChild(a); a.click(); a.remove(); }
+  else saveCanvas(c,nm+'.png','image/png');
+});
+invList(); drawInvoice();
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ drawPoster(); drawInvoice(); });
+
+/* =====================  ID CARD (organisations)  ===================== */
+const IDC={logo:null,photo:null};
+const GOV=/\b(federal republic|nimc|national identity|nin slip|frsc|inec|voter'?s?\s*card|driver'?s?\s*licen[cs]e|passport|immigration|nigeria police|nysc|bvn|national id|ministry|government of)\b/i;
+$('#id-issue').value=new Date().toISOString().slice(0,10);
+$('#id-exp').value=new Date(Date.now()+365*864e5).toISOString().slice(0,10);
+$('#id-logo').onchange=async e=>{ const f=e.target.files[0]; IDC.logo=f?await loadImage(f):null; drawIdCard(); };
+$('#id-photo').onchange=async e=>{ const f=e.target.files[0]; IDC.photo=f?await loadImage(f):null; drawIdCard(); };
+function idBlocked(){ return GOV.test([$('#id-org').value,$('#id-role').value,$('#id-type').value].join(' ')); }
+function cover(ctx,img,x,y,w,h){ const s=Math.max(w/img.naturalWidth,h/img.naturalHeight); ctx.drawImage(img,x+w/2-img.naturalWidth*s/2,y+h/2-img.naturalHeight*s/2,img.naturalWidth*s,img.naturalHeight*s); }
+function drawQR(ctx,text,x,y,size){
+  if(typeof qrcode==='undefined') return;
+  try{ const q=qrcode(0,'M'); q.addData(text.replace(/[^\x20-\x7E]/g,'')); q.make(); const n=q.getModuleCount(), cs=size/n;
+    ctx.fillStyle='#fff'; ctx.fillRect(x-12,y-12,size+24,size+24); ctx.fillStyle='#000';
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++) if(q.isDark(r,c)) ctx.fillRect(x+c*cs,y+r*cs,Math.ceil(cs),Math.ceil(cs)); }catch(e){}
+}
+function idRender(wm){
+  const W=1100,H=1510,cw=1011,ch=638,cx=(W-cw)/2,y1=70,y2=y1+ch+90,c=mkCanvas(W,H),x=c.getContext('2d');
+  const acc=$('#id-color').value, F='"DM Sans",Arial,sans-serif', FH='"Bricolage Grotesque","DM Sans",Arial,sans-serif', ink='#12201a', mut='#5a6b62';
+  const org=$('#id-org').value||'Organisation', name=$('#id-name').value||'Full name', no=$('#id-no').value||'-';
+  x.fillStyle='#e6ecea'; x.fillRect(0,0,W,H); x.textBaseline='top';
+  const card=y=>{ x.save(); x.shadowColor='rgba(0,0,0,.18)'; x.shadowBlur=30; x.shadowOffsetY=10; x.fillStyle='#fff'; x.beginPath(); x.roundRect(cx,y,cw,ch,34); x.fill(); x.restore(); x.save(); x.beginPath(); x.roundRect(cx,y,cw,ch,34); x.clip(); };
+  // FRONT
+  card(y1);
+  x.fillStyle=acc; x.fillRect(cx,y1,cw,160);
+  x.fillStyle='rgba(255,255,255,.12)'; x.beginPath(); x.arc(cx+cw-60,y1+10,170,0,7); x.fill();
+  let tx=cx+40;
+  if(IDC.logo){ const s=100/Math.max(IDC.logo.naturalWidth,IDC.logo.naturalHeight), lw=IDC.logo.naturalWidth*s, lh=IDC.logo.naturalHeight*s; x.fillStyle='#fff'; x.beginPath(); x.roundRect(cx+30,y1+25,lw+20,lh+20,14); x.fill(); x.drawImage(IDC.logo,cx+40,y1+35,lw,lh); tx=cx+30+lw+50; }
+  x.fillStyle='#fff'; x.textAlign='left'; x.font=`800 38px ${FH}`; wrap(x,org,tx,y1+42,560,44,2);
+  x.textAlign='right'; x.font=`700 26px ${F}`; x.fillText($('#id-type').value,cx+cw-40,y1+22); x.textAlign='left';
+  // photo
+  const px=cx+44,py=y1+196,pw=250,ph=320;
+  x.save(); x.beginPath(); x.roundRect(px,py,pw,ph,20); x.clip(); x.fillStyle='#eef3ef'; x.fillRect(px,py,pw,ph);
+  if(IDC.photo) cover(x,IDC.photo,px,py,pw,ph);
+  else { x.fillStyle=acc; x.globalAlpha=.18; x.fillRect(px,py,pw,ph); x.globalAlpha=1; x.fillStyle=acc; x.font=`800 110px ${FH}`; x.textAlign='center'; x.textBaseline='middle'; x.fillText(name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(),px+pw/2,py+ph/2); x.textBaseline='top'; x.textAlign='left'; }
+  x.restore(); x.strokeStyle=acc; x.lineWidth=6; x.beginPath(); x.roundRect(px,py,pw,ph,20); x.stroke();
+  const rx=cx+340; let y=py;
+  x.fillStyle=ink; x.font=`800 50px ${FH}`; y=wrap(x,name,rx,y,620,56,2).y+4;
+  x.fillStyle=acc; x.font=`700 30px ${F}`; y=wrap(x,$('#id-role').value,rx,y,620,38,2).y+22;
+  [['ID No.',no],['Issued',fmtDate($('#id-issue').value)],['Expires',fmtDate($('#id-exp').value)]].forEach(([k,v])=>{ x.fillStyle=mut; x.font=`400 24px ${F}`; x.fillText(k,rx,y+4); x.fillStyle=ink; x.font=`700 28px ${F}`; x.fillText(v||'-',rx+150,y); y+=48; });
+  x.fillStyle=acc; x.fillRect(cx,y1+ch-26,cw,26); x.restore();
+  // BACK
+  card(y2);
+  x.fillStyle=acc; x.fillRect(cx,y2,cw,18);
+  const bx=cx+44; y=y2+60; x.textAlign='left';
+  x.fillStyle=ink; x.font=`800 32px ${FH}`; y=wrap(x,org,bx,y,560,38,2).y+16;
+  [['Phone',$('#id-phone').value],['Email',$('#id-email').value]].filter(r=>r[1]).forEach(([k,v])=>{ x.fillStyle=mut; x.font=`400 22px ${F}`; x.fillText(k,bx,y+3); x.fillStyle=ink; x.font=`600 25px ${F}`; x.fillText(v,bx+110,y); y+=44; });
+  x.fillStyle=mut; x.font=`700 22px ${F}`; x.fillText('If found, please return to:',bx,y+10); y+=48;
+  x.font=`400 24px ${F}`; x.fillStyle=ink; y=wrapP(x,$('#id-oaddr').value,bx,y,560,32,3).y;
+  drawQR(x,`ID:${no}|${name}|${org}`,cx+cw-44-230,y2+70,230);
+  x.fillStyle=mut; x.font=`400 20px ${F}`; x.textAlign='center'; x.fillText('Scan to read card details',cx+cw-44-115,y2+70+230+22);
+  x.textAlign='left'; x.fillStyle=ink; x.fillRect(bx,y2+ch-150,300,2); x.fillStyle=mut; x.font=`400 20px ${F}`; x.fillText('Authorised signature',bx,y2+ch-140);
+  x.font=`400 19px ${F}`; wrap(x,`This card is issued by ${org} and remains its property. It is an organisation card and is not a government-issued identity document.`,bx,y2+ch-92,cw-88,25,2);
+  x.fillStyle=acc; x.fillRect(cx,y2+ch-26,cw,26); x.restore();
+  if(wm) drawWatermark(c);
+  return c;
+}
+function drawIdCard(){
+  const m=$('#id-msg'), o=$('#id-canvas');
+  if(idBlocked()){ m.textContent='Government-style cards are not supported. Use this tool for your own organisation, school, business or event.'; o.hidden=true; $('#id-dl').disabled=true; return; }
+  m.textContent=''; o.hidden=false; $('#id-dl').disabled=false;
+  const c=idRender(wmOn()); o.width=c.width; o.height=c.height; o.getContext('2d').drawImage(c,0,0);
+}
+document.querySelectorAll('#p-idcard input,#p-idcard select,#p-idcard textarea').forEach(el=>el.addEventListener('input',drawIdCard));
+$('#id-dl').onclick=()=>{ if(idBlocked()) return drawIdCard(); exportFlow(wm=>saveCanvas(idRender(wm),'spoedit-id-card.png','image/png')); };
+drawIdCard();
+
+/* =====================  MOTION & EFFECTS  ===================== */
+// hero headline: words rise in one by one
+const h1=document.querySelector('.hero h1'); h1.setAttribute('aria-label',h1.textContent.trim());
+h1.innerHTML=h1.textContent.trim().split(' ').map((w,i)=>`<span class="w" aria-hidden="true" style="--i:${i}">${w}</span>`).join(' ');
+// marquee needs two identical halves
+const tr=document.querySelector('.track'); tr.innerHTML+=tr.innerHTML;
+// service cards
+const SVC=[
+ ['passport','Passport photo','Clean background, correct size, ready to print.','<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>'],
+ ['enhance','Fix blurry photo','Sharper edges and more detail. Same face.','<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16v4M17 18h4"/>'],
+ ['iphone','iPhone look','Flagship-phone colour and clarity.','<rect x="7" y="2" width="10" height="20" rx="3"/><circle cx="12" cy="18" r=".8"/>'],
+ ['poster','Poster & flyer','Describe your event and get a finished design.','<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>'],
+ ['invoice','Invoice & receipt','Branded documents for your company, as PDF or image.','<path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>'],
+ ['idcard','ID card','Staff, student and member cards with a scannable QR code.','<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.5 16c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4M14 10h4M14 14h3"/>'],
+ ['doc','Edit document','Replace, clean up and reformat text fast.','<path d="M14 2H7a2 2 0 00-2 2v16a2 2 0 002 2h10a2 2 0 002-2V7z"/><path d="M14 2v5h5M9 13h6M9 17h6"/>']
+];
+function gotoTool(id){ document.querySelector(`.tab[data-t="${id}"]`).click(); document.getElementById('tools').scrollIntoView({behavior:'smooth'}); }
+$('#svcGrid').innerHTML=SVC.map(s=>`<button class="svc" data-go="${s[0]}"><svg viewBox="0 0 24 24" aria-hidden="true">${s[3]}</svg><h3>${s[1].replace('&','&amp;')}</h3><p>${s[2]}</p><span class="go">Open tool</span><span class="price" data-price="${s[0]}"></span></button>`).join('');
+document.querySelectorAll('.svc').forEach(b=>{
+  b.onclick=()=>gotoTool(b.dataset.go);
+  b.addEventListener('pointermove',e=>{ if(e.pointerType!=='mouse') return; const r=b.getBoundingClientRect(), px=(e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+    b.style.setProperty('--ry',((px-.5)*10).toFixed(2)+'deg'); b.style.setProperty('--rx',((.5-py)*8).toFixed(2)+'deg'); b.style.setProperty('--mx',px*100+'%'); b.style.setProperty('--my',py*100+'%'); });
+  b.addEventListener('pointerleave',()=>{ b.style.setProperty('--ry','0deg'); b.style.setProperty('--rx','0deg'); });
+});
+// scroll reveal
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const io=('IntersectionObserver' in window&&!reduce)?new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); setTimeout(()=>{e.target.style.transitionDelay=''},1500); io.unobserve(e.target); } }),{threshold:.12}):null;
+document.querySelectorAll('.services h2,.services .sub,.svc,#tools h2,#tools .sub,.tabs,.how h2,.steps div').forEach(el=>{
+  el.classList.add('reveal');
+  if(io){ el.style.transitionDelay=([...el.parentNode.children].indexOf(el)*90)+'ms'; io.observe(el); } else el.classList.add('in');
+});
+// scroll progress bar
+const prog=$('#prog');
+addEventListener('scroll',()=>{ const h=document.documentElement.scrollHeight-innerHeight; prog.style.transform=`scaleX(${h>0?scrollY/h:0})`; },{passive:true});
+// confetti on a successful download
+function confetti(){
+  if(reduce) return;
+  const c=document.createElement('canvas'); c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99'; c.width=innerWidth; c.height=innerHeight; document.body.appendChild(c);
+  const x=c.getContext('2d'), cols=['#0e6b4a','#ffd23f','#7ad3a8','#12201a','#fff0b3'];
+  const ps=Array.from({length:110},()=>({x:innerWidth/2,y:innerHeight*.7,vx:(Math.random()-.5)*16,vy:-Math.random()*16-6,s:5+Math.random()*7,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.random()*cols.length|0]}));
+  let t=0; (function f(){ x.clearRect(0,0,c.width,c.height); ps.forEach(p=>{ p.vy+=.45; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; x.save(); x.translate(p.x,p.y); x.rotate(p.r); x.fillStyle=p.c; x.fillRect(-p.s/2,-p.s/3,p.s,p.s*.6); x.restore(); }); if(++t<130) requestAnimationFrame(f); else c.remove(); })();
+}
+loadMe(); setInterval(()=>{ if(!document.hidden) loadMe(); },60000);
+
+</script>
+</body>
+</html>

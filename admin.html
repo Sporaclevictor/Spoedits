@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Spoedit Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fff;--mist:#eef3ef;--ink:#12201a;--muted:#5a6b62;--green:#0e6b4a;--green-d:#0a4d35;--flash:#ffd23f;--line:#d5e0d9;--danger:#c0392b}
+*{box-sizing:border-box;margin:0}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);background:var(--mist);line-height:1.5}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;line-height:1.1}
+:focus-visible{outline:3px solid var(--flash);outline-offset:2px}
+.wrap{width:min(1000px,94%);margin-inline:auto}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:12px 0;gap:10px}
+.logo{font-family:'Bricolage Grotesque';font-weight:800;font-size:1.35rem}
+.logo small{font:500 .8rem 'DM Sans';color:var(--muted);margin-left:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:10px;border:2px solid var(--green);background:var(--green);color:#fff;font:700 .92rem 'DM Sans';cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:var(--green-d)}.btn:active{transform:scale(.97)}
+.btn.alt{background:#fff;color:var(--green)}.btn.alt:hover{background:var(--mist)}
+.btn.bad{background:#fff;border-color:var(--danger);color:var(--danger)}.btn.bad:hover{background:#fde8e5}
+.btn.sm{padding:7px 12px;font-size:.85rem;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+input,select{padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font:400 1rem 'DM Sans';color:var(--ink);min-width:0}
+label{font-size:.88rem;font-weight:700;display:block;margin-bottom:5px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+#login{min-height:100vh;display:grid;place-items:center;padding:16px}
+#login .card{width:min(380px,100%);display:flex;flex-direction:column;gap:12px;animation:pop .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.err{color:var(--danger);font-size:.9rem;min-height:1.2em}.ok{color:var(--green)}
+#app{display:none;padding-bottom:50px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{display:block;font:800 1.7rem 'Bricolage Grotesque'}.stat span{color:var(--muted);font-size:.85rem}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{padding:10px 18px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font:700 .95rem 'DM Sans';cursor:pointer}
+.tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.panel{display:none}.panel.on{display:block;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input{flex:1;min-width:160px}
+.chip{padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font:500 .88rem 'DM Sans'}
+.chip[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.item .main{min-width:210px;flex:1}
+.item .t{font-weight:700}.item .m{color:var(--muted);font-size:.85rem}
+.item .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700}
+.pill.pending{background:#fff4c7;color:#7a5b00}.pill.confirmed{background:#d6f2e3;color:#0a5a3b}.pill.rejected,.pill.banned{background:#fde1dd;color:#9b2a1d}.pill.active{background:#d6f2e3;color:#0a5a3b}
+h2{font-size:1.4rem;margin:6px 0 12px}
+.prices{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:28px}
+.price{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.price .n{font-weight:700;margin-bottom:8px}
+.stepper{display:flex;gap:6px;align-items:center}
+.stepper input{width:100%;text-align:center;font-weight:700}
+.stepper .btn{padding:9px 12px}
+.price .row2{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+.empty{color:var(--muted);padding:24px;text-align:center;background:#fff;border:1.5px dashed var(--line);border-radius:14px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-6px)}
+@media (max-width:560px){.stats{grid-template-columns:1fr 1fr 1fr;gap:8px}.stat b{font-size:1.3rem}.item .acts{width:100%}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="card">
+    <h1 style="font-size:1.8rem">Spoedit admin</h1>
+    <p style="color:var(--muted);font-size:.92rem">Enter your admin password to manage payments, prices and users.</p>
+    <div><label for="pw">Password</label><input type="password" id="pw" style="width:100%" autocomplete="current-password"></div>
+    <button class="btn" id="go">Sign in</button>
+    <div class="err" id="lerr" role="alert"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header><div class="wrap bar">
+    <div class="logo">Spoedit<small>Admin</small></div>
+    <div style="display:flex;gap:8px"><button class="btn alt sm" id="refresh">Refresh</button><button class="btn alt sm" id="out">Sign out</button></div>
+  </div></header>
+
+  <main class="wrap">
+    <div class="stats">
+      <div class="stat"><b id="s-pend">0</b><span>Awaiting confirmation</span></div>
+      <div class="stat"><b id="s-conf">0</b><span>Confirmed payments</span></div>
+      <div class="stat"><b id="s-rev">₦0</b><span>Confirmed revenue</span></div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-p="pay" aria-selected="true">Payments</button>
+      <button class="tab" role="tab" data-p="mgmt" aria-selected="false">Prices &amp; users</button>
+    </div>
+
+    <!-- PANEL 1: PAYMENTS -->
+    <section class="panel on" id="panel-pay">
+      <div class="tools">
+        <button class="chip" data-f="pending" aria-pressed="true">Pending</button>
+        <button class="chip" data-f="confirmed" aria-pressed="false">Confirmed</button>
+        <button class="chip" data-f="rejected" aria-pressed="false">Rejected</button>
+        <button class="chip" data-f="all" aria-pressed="false">All</button>
+        <input type="search" id="psearch" placeholder="Search reference, phone or service" aria-label="Search payments">
+      </div>
+      <div class="list" id="plist"></div>
+    </section>
+
+    <!-- PANEL 2: PRICES & USERS -->
+    <section class="panel" id="panel-mgmt">
+      <h2>Prices</h2>
+      <div class="prices" id="prices"></div>
+      <h2>Users</h2>
+      <div class="tools"><input type="search" id="usearch" placeholder="Search user ID, phone or name" aria-label="Search users"></div>
+      <div class="list" id="ulist"></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const naira=n=>'₦'+Number(n).toLocaleString('en-NG');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const when=t=>t?new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'-';
+let token=sessionStorage.getItem('spo_admin')||'', SERVICES={}, PRICES={}, PAYS=[], USERS=[], FILTER='pending', timer=null;
+
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2200); }
+async function call(action,data={}){
+  const r=await fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({action,...data})});
+  let j={}; try{j=await r.json()}catch{}
+  if(r.status===401&&action!=='login'){ logout(); throw new Error('Session expired. Sign in again.'); }
+  if(!r.ok) throw Object.assign(new Error(j.error||'error'),{code:j.error,status:r.status});
+  return j;
+}
+function logout(){ token=''; sessionStorage.removeItem('spo_admin'); clearInterval(timer); $('#app').style.display='none'; $('#login').style.display='grid'; }
+async function login(){
+  $('#lerr').textContent=''; $('#go').disabled=true;
+  try{ const j=await call('login',{password:$('#pw').value}); token=j.token; sessionStorage.setItem('spo_admin',token); $('#pw').value=''; start(); }
+  catch(e){ $('#lerr').textContent = e.code==='wrong_password'?'Wrong password.':e.code==='too_many'?'Too many attempts. Wait 15 minutes.':e.code==='admin_not_configured'?'ADMIN_PASSWORD is not set in Vercel yet.':'Could not sign in. Try again.'; }
+  $('#go').disabled=false;
+}
+$('#go').onclick=login; $('#pw').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
+$('#out').onclick=logout; $('#refresh').onclick=()=>loadAll(true);
+
+async function start(){ $('#login').style.display='none'; $('#app').style.display='block'; await loadAll(); clearInterval(timer); timer=setInterval(()=>{ if(!document.hidden) loadPayments(); },20000); }
+async function loadAll(manual){ try{ await Promise.all([loadPayments(),loadPrices(),loadUsers()]); if(manual) toast('Updated'); }catch(e){ toast(e.message); } }
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t)); document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on')); $('#panel-'+t.dataset.p).classList.add('on'); });
+
+/* ---------- payments ---------- */
+async function loadPayments(){
+  const j=await call('payments'); PAYS=j.payments; SERVICES=j.services;
+  $('#s-pend').textContent=j.stats.pending; $('#s-conf').textContent=j.stats.confirmed; $('#s-rev').textContent=naira(j.stats.revenue);
+  drawPayments();
+}
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ FILTER=c.dataset.f; document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c)); drawPayments(); });
+$('#psearch').addEventListener('input',drawPayments);
+function drawPayments(){
+  const q=$('#psearch').value.trim().toLowerCase();
+  const rows=PAYS.filter(p=>(FILTER==='all'||p.status===FILTER)&&(!q||[p.ref,p.phone,SERVICES[p.service],p.uid].join(' ').toLowerCase().includes(q)));
+  $('#plist').innerHTML=rows.length?rows.map(p=>`
+    <div class="item">
+      <div class="main">
+        <div class="t">${esc(p.ref)} · ${esc(SERVICES[p.service]||p.service)} · ${naira(p.amount)} <span class="pill ${p.status}">${p.status}</span></div>
+        <div class="m">${when(p.created)} · User ${esc(p.uid.slice(0,8))}${p.phone?` · <a href="https://wa.me/${esc(p.phone)}" target="_blank" rel="noopener">${esc(p.phone)}</a>`:' · no phone given'}</div>
+      </div>
+      ${p.status==='pending'?`<div class="acts"><button class="btn sm" data-act="confirm" data-ref="${esc(p.ref)}">Confirm payment</button><button class="btn bad sm" data-act="reject" data-ref="${esc(p.ref)}">Reject</button></div>`:''}
+    </div>`).join(''):'<div class="empty">Nothing here yet.</div>';
+}
+$('#plist').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-act]'); if(!b) return; const {act,ref}=b.dataset; const p=PAYS.find(x=>x.ref===ref);
+  const q=act==='confirm'?`Confirm that you received ${naira(p.amount)} for ${SERVICES[p.service]} (${ref})?\nThe customer gets 1 clean download.`:`Reject payment ${ref}?`;
+  if(!confirm(q)) return; b.disabled=true;
+  try{ await call(act,{ref}); toast(act==='confirm'?'Payment confirmed':'Payment rejected'); await loadPayments(); await loadUsers(); }
+  catch(err){ toast(err.code&&err.code.startsWith('already')?'Already handled':'Failed: '+err.message); loadPayments(); }
+});
+
+/* ---------- prices ---------- */
+async function loadPrices(){ const j=await call('prices'); PRICES=j.prices; SERVICES=j.services; drawPrices(); }
+function drawPrices(){
+  $('#prices').innerHTML=Object.keys(SERVICES).map(k=>`
+    <div class="price" data-k="${k}">
+      <div class="n">${esc(SERVICES[k])}</div>
+      <div class="stepper">
+        <button class="btn alt sm" data-d="-50" aria-label="Reduce by 50">−50</button>
+        <input type="number" min="0" step="50" value="${PRICES[k]}" aria-label="${esc(SERVICES[k])} price in naira">
+        <button class="btn alt sm" data-d="50" aria-label="Increase by 50">+50</button>
+      </div>
+      <div class="row2"><span class="m" style="font-size:.85rem;color:var(--muted)">Now: <b class="cur">${naira(PRICES[k])}</b></span><button class="btn sm" data-save>Save</button></div>
+    </div>`).join('');
+}
+$('#prices').addEventListener('click',async e=>{
+  const card=e.target.closest('.price'); if(!card) return; const inp=card.querySelector('input');
+  const d=e.target.closest('[data-d]'); if(d){ inp.value=Math.max(0,(+inp.value||0)+ +d.dataset.d); return; }
+  if(e.target.closest('[data-save]')){
+    const btn=e.target.closest('[data-save]'); btn.disabled=true;
+    try{ const j=await call('setPrice',{service:card.dataset.k,price:inp.value}); PRICES=j.prices; card.querySelector('.cur').textContent=naira(PRICES[card.dataset.k]); inp.value=PRICES[card.dataset.k]; toast('Price saved'); }
+    catch(err){ toast('Could not save price'); }
+    btn.disabled=false;
+  }
+});
+
+/* ---------- users ---------- */
+async function loadUsers(){ const j=await call('users'); USERS=j.users; SERVICES=j.services; drawUsers(); }
+$('#usearch').addEventListener('input',drawUsers);
+function drawUsers(){
+  const q=$('#usearch').value.trim().toLowerCase();
+  const rows=USERS.filter(u=>!q||[u.id,u.phone,u.name].join(' ').toLowerCase().includes(q));
+  const opts=Object.keys(SERVICES).map(k=>`<option value="${k}">${esc(SERVICES[k])}</option>`).join('');
+  $('#ulist').innerHTML=rows.length?rows.map(u=>{
+    const cr=Object.entries(u.credits||{}).filter(([,n])=>n>0).map(([k,n])=>`${esc(SERVICES[k]||k)}: ${n}`).join(', ')||'none';
+    return `<div class="item" data-id="${esc(u.id)}">
+      <div class="main">
+        <div class="t">${esc(u.id.slice(0,8))} ${u.phone?`· ${esc(u.phone)}`:''} <span class="pill ${u.banned?'banned':'active'}">${u.banned?'banned':'active'}</span></div>
+        <div class="m">Free trials left: ${u.free} · Paid credits: ${cr}<br>First seen ${when(u.created)} · Last seen ${when(u.last)}</div>
+      </div>
+      <div class="acts">
+        <select aria-label="Service to give credit for">${opts}</select>
+        <button class="btn alt sm" data-grant="1">+1 credit</button>
+        <button class="btn alt sm" data-grant="-1">−1</button>
+        ${u.banned?'<button class="btn sm" data-ban="unban">Unban</button>':'<button class="btn bad sm" data-ban="ban">Ban</button>'}
+      </div>
+    </div>`;}).join(''):'<div class="empty">No users yet. They appear after someone visits the site.</div>';
+}
+$('#ulist').addEventListener('click',async e=>{
+  const row=e.target.closest('.item'); if(!row) return; const id=row.dataset.id;
+  const ban=e.target.closest('[data-ban]'), gr=e.target.closest('[data-grant]');
+  try{
+    if(ban){ if(!confirm(ban.dataset.ban==='ban'?'Ban this user? They will not be able to download or pay.':'Unban this user?')) return; await call(ban.dataset.ban,{id}); toast(ban.dataset.ban==='ban'?'User banned':'User unbanned'); }
+    else if(gr){ await call('grant',{id,service:row.querySelector('select').value,n:+gr.dataset.grant}); toast('Credits updated'); }
+    else return;
+    await loadUsers();
+  }catch(err){ toast('Failed: '+err.message); }
+});
+
+if(token){ start().catch(()=>logout()); }
+</script>
+</body>
+</html>
