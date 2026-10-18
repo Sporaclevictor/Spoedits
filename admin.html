@@ -61,6 +61,11 @@ h2{font-size:1.4rem;margin:6px 0 12px}
 .empty{color:var(--muted);padding:24px;text-align:center;background:#fff;border:1.5px dashed var(--line);border-radius:14px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(-6px)}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:10px}
+.toggle input{width:20px;height:20px;accent-color:var(--green)}
+.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form2 input{width:100%}
+@media (max-width:560px){.form2{grid-template-columns:1fr}}
 @media (max-width:560px){.stats{grid-template-columns:1fr 1fr 1fr;gap:8px}.stat b{font-size:1.3rem}.item .acts{width:100%}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -84,6 +89,7 @@ h2{font-size:1.4rem;margin:6px 0 12px}
   </div></header>
 
   <main class="wrap">
+    <div class="card" id="dbwarn" style="display:none;background:#fff8dc;border-color:#f0dc8a;margin-top:18px"><b>Database not connected yet.</b> In Vercel open <b>Storage</b>, create an <b>Upstash Redis</b> database, connect it to this project, then <b>Redeploy</b>. Until then the site runs in trial-only mode and payments, prices and bans cannot be saved.</div>
     <div class="stats">
       <div class="stat"><b id="s-pend">0</b><span>Awaiting confirmation</span></div>
       <div class="stat"><b id="s-conf">0</b><span>Confirmed payments</span></div>
@@ -109,6 +115,19 @@ h2{font-size:1.4rem;margin:6px 0 12px}
 
     <!-- PANEL 2: PRICES & USERS -->
     <section class="panel" id="panel-mgmt">
+      <h2>Payment options</h2>
+      <div class="card" id="payopts" style="margin-bottom:28px">
+        <label class="toggle"><input type="checkbox" id="o-bank"> Bank transfer</label>
+        <div class="form2" style="margin-bottom:14px">
+          <div><label for="o-bname">Bank name</label><input type="text" id="o-bname" maxlength="40"></div>
+          <div><label for="o-bnum">Account number (10 digits)</label><input type="text" id="o-bnum" inputmode="numeric" maxlength="10"></div>
+          <div style="grid-column:1/-1"><label for="o-bhold">Account name (shown to customers)</label><input type="text" id="o-bhold" maxlength="60" placeholder="e.g. Your full name or business name"></div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="o-wa"> WhatsApp payment</label>
+        <div style="margin-bottom:14px"><label for="o-wanum">WhatsApp number</label><input type="text" id="o-wanum" inputmode="tel" style="width:100%;max-width:300px"></div>
+        <button class="btn" id="o-save">Save payment options</button>
+        <p class="m" style="color:var(--muted);font-size:.85rem;margin-top:8px">Changes go live immediately. At least one option must stay on.</p>
+      </div>
       <h2>Prices</h2>
       <div class="prices" id="prices"></div>
       <h2>Users</h2>
@@ -138,14 +157,14 @@ function logout(){ token=''; sessionStorage.removeItem('spo_admin'); clearInterv
 async function login(){
   $('#lerr').textContent=''; $('#go').disabled=true;
   try{ const j=await call('login',{password:$('#pw').value}); token=j.token; sessionStorage.setItem('spo_admin',token); $('#pw').value=''; start(); }
-  catch(e){ $('#lerr').textContent = e.code==='wrong_password'?'Wrong password.':e.code==='too_many'?'Too many attempts. Wait 15 minutes.':e.code==='admin_not_configured'?'ADMIN_PASSWORD is not set in Vercel yet.':'Could not sign in. Try again.'; }
+  catch(e){ $('#lerr').textContent = e.code==='wrong_password'?'Wrong password.':e.code==='too_many'?'Too many attempts. Wait 15 minutes.':'Could not sign in. Try again.'; }
   $('#go').disabled=false;
 }
 $('#go').onclick=login; $('#pw').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
 $('#out').onclick=logout; $('#refresh').onclick=()=>loadAll(true);
 
 async function start(){ $('#login').style.display='none'; $('#app').style.display='block'; await loadAll(); clearInterval(timer); timer=setInterval(()=>{ if(!document.hidden) loadPayments(); },20000); }
-async function loadAll(manual){ try{ await Promise.all([loadPayments(),loadPrices(),loadUsers()]); if(manual) toast('Updated'); }catch(e){ toast(e.message); } }
+async function loadAll(manual){ try{ await Promise.all([loadPayments(),loadPrices(),loadUsers(),loadSettings()]); $('#dbwarn').style.display='none'; if(manual) toast('Updated'); }catch(e){ if(e.code==='db_not_configured'||e.status===503) $('#dbwarn').style.display='block'; else toast(e.message); } }
 
 /* tabs */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t)); document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on')); $('#panel-'+t.dataset.p).classList.add('on'); });
@@ -164,8 +183,8 @@ function drawPayments(){
   $('#plist').innerHTML=rows.length?rows.map(p=>`
     <div class="item">
       <div class="main">
-        <div class="t">${esc(p.ref)} · ${esc(SERVICES[p.service]||p.service)} · ${naira(p.amount)} <span class="pill ${p.status}">${p.status}</span></div>
-        <div class="m">${when(p.created)} · User ${esc(p.uid.slice(0,8))}${p.phone?` · <a href="https://wa.me/${esc(p.phone)}" target="_blank" rel="noopener">${esc(p.phone)}</a>`:' · no phone given'}</div>
+        <div class="t">${esc(p.ref)} · ${esc(SERVICES[p.service]||p.service)} · ${naira(p.amount)} <span class="pill ${p.status}">${p.status}</span>${p.status==='pending'&&p.claimed?' <span class="pill confirmed">customer says paid</span>':''}</div>
+        <div class="m">${p.method==='bank'?'Bank transfer':'WhatsApp'}${p.payer?' · Payer: '+esc(p.payer):''} · ${when(p.created)} · User ${esc(p.uid.slice(0,8))}${p.phone?` · <a href="https://wa.me/${esc(p.phone)}" target="_blank" rel="noopener">${esc(p.phone)}</a>`:' · no phone given'}</div>
       </div>
       ${p.status==='pending'?`<div class="acts"><button class="btn sm" data-act="confirm" data-ref="${esc(p.ref)}">Confirm payment</button><button class="btn bad sm" data-act="reject" data-ref="${esc(p.ref)}">Reject</button></div>`:''}
     </div>`).join(''):'<div class="empty">Nothing here yet.</div>';
@@ -177,6 +196,21 @@ $('#plist').addEventListener('click',async e=>{
   try{ await call(act,{ref}); toast(act==='confirm'?'Payment confirmed':'Payment rejected'); await loadPayments(); await loadUsers(); }
   catch(err){ toast(err.code&&err.code.startsWith('already')?'Already handled':'Failed: '+err.message); loadPayments(); }
 });
+
+/* ---------- payment options ---------- */
+async function loadSettings(){
+  const s=await call('settings');
+  $('#o-bank').checked=s.methods.bank; $('#o-wa').checked=s.methods.whatsapp;
+  $('#o-bname').value=s.bank.name; $('#o-bnum').value=s.bank.number; $('#o-bhold').value=s.bank.holder; $('#o-wanum').value=s.whatsappNumber;
+}
+$('#o-save').onclick=async()=>{
+  const btn=$('#o-save'); btn.disabled=true;
+  try{
+    await call('setSettings',{methods:{bank:$('#o-bank').checked,whatsapp:$('#o-wa').checked},bank:{name:$('#o-bname').value,number:$('#o-bnum').value,holder:$('#o-bhold').value},whatsappNumber:$('#o-wanum').value});
+    toast('Payment options saved'); await loadSettings();
+  }catch(e){ toast(e.code==='bad_account'?'Account number must be 10 digits':e.code==='need_one_method'?'Keep at least one payment option on':e.code==='bad_whatsapp'?'Enter a valid WhatsApp number':'Could not save'); }
+  btn.disabled=false;
+};
 
 /* ---------- prices ---------- */
 async function loadPrices(){ const j=await call('prices'); PRICES=j.prices; SERVICES=j.services; drawPrices(); }

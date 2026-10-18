@@ -106,6 +106,14 @@ footer a{color:var(--flash)}
 .svc .price{margin-left:10px;font-size:.85rem;font-weight:700;color:var(--muted)}
 .guard{background:#fff8dc;border:1px solid #f0dc8a;border-radius:10px;padding:10px 12px;font-size:.85rem}
 .modal .card input[type=text]{margin-bottom:0}
+input[type=file]{padding:8px;background:#fff;border:2px dashed var(--green);cursor:pointer;font-size:.92rem}
+input[type=file]::file-selector-button{margin-right:12px;padding:9px 14px;border:0;border-radius:8px;background:var(--green);color:#fff;font:700 .9rem 'DM Sans',sans-serif;cursor:pointer}
+.bankbox{margin-top:12px;border:1.5px solid var(--green);background:var(--mist);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.bankbox>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bankbox span{color:var(--muted);font-size:.84rem;min-width:112px}
+.bankbox b{font-size:1.02rem;word-break:break-all}
+#bk-num{font-family:'Bricolage Grotesque',sans-serif;font-size:1.3rem;letter-spacing:.04em}
+.bankbox .btn{align-self:flex-start}
 /* ===== motion & polish ===== */
 body{overflow-x:hidden}
 [hidden]{display:none!important}
@@ -448,7 +456,7 @@ Account no: 0123456789</textarea></div>
   <div class="steps">
     <div><h3>Upload</h3><p>Choose a tool and add your photo, details or document.</p></div>
     <div><h3>Preview</h3><p>See the result right away and adjust it.</p></div>
-    <div><h3>Pay on WhatsApp</h3><p>Tap Pay on WhatsApp and send the message. We confirm your payment in minutes.</p></div>
+    <div><h3>Pay</h3><p>Pay by bank transfer or on WhatsApp. We confirm your payment in minutes.</p></div>
     <div><h3>Download</h3><p>Tap "I've paid" and download without a watermark.</p></div>
   </div>
 </section>
@@ -466,14 +474,24 @@ Account no: 0123456789</textarea></div>
     <h3 id="pay-h">Download without watermark</h3>
     <p id="pay-top" class="note"></p>
     <ol>
-      <li>Tap <b>Pay on WhatsApp</b> and send the message.</li>
-      <li>Pay using the account details we reply with.</li>
-      <li>We confirm your payment, usually within minutes.</li>
-      <li>Come back here and tap <b>I've paid</b>.</li>
+      <li>Choose how you want to pay.</li>
+      <li>Pay and keep your reference.</li>
+      <li>Tap <b>I've paid</b>. We confirm in minutes.</li>
     </ol>
-    <label for="pay-phone">Your WhatsApp number (optional)</label>
-    <input type="text" id="pay-phone" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel">
-    <button class="btn" id="pay-wa" style="width:100%;margin-top:12px">Pay on WhatsApp</button>
+    <div class="row" style="margin-bottom:10px">
+      <div><label for="pay-phone">Your WhatsApp number (optional)</label><input type="text" id="pay-phone" inputmode="tel" placeholder="0801 234 5678" autocomplete="tel"></div>
+      <div><label for="pay-payer">Name on your bank account (optional)</label><input type="text" id="pay-payer" placeholder="Used to match your transfer" autocomplete="name"></div>
+    </div>
+    <button class="btn" id="pay-bank" style="width:100%">Pay by bank transfer</button>
+    <div class="bankbox" id="bank-box" hidden>
+      <div><span>Bank</span><b id="bk-name"></b></div>
+      <div><span>Account number</span><b id="bk-num"></b><button type="button" class="btn alt sm" id="bk-copy">Copy</button></div>
+      <div id="bk-holder-row"><span>Account name</span><b id="bk-holder"></b></div>
+      <div><span>Amount</span><b id="bk-amt"></b></div>
+      <div><span>Narration</span><b id="bk-ref"></b></div>
+      <a class="btn alt sm" id="pay-proof" href="#" target="_blank" rel="noopener" hidden>Send proof of payment on WhatsApp</a>
+    </div>
+    <button class="btn alt" id="pay-wa" style="width:100%;margin-top:10px">Pay on WhatsApp</button>
     <div class="msg" id="pay-ref"></div>
     <div class="divider"></div>
     <button class="btn flash" id="pay-check" style="width:100%">I've paid, check my payment</button>
@@ -486,10 +504,13 @@ Account no: 0123456789</textarea></div>
 const WHATSAPP = "2349124154453";   // 09124154453 in international format
 /* Prices, free trials, bans and payments live on the server. Change prices in /admin. */
 const $ = s => document.querySelector(s);
-const wa = (text) => `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(text)}`;
-$('#heroWa').href = wa("Hello Spoedit, I have a question.");
-$('#footWa').href = wa("Hello Spoedit, I have a question.");
-$('#docWa').href = wa("Hello Spoedit, I need help editing a document.");
+const wa = (text) => `https://wa.me/${window.__waNum || WHATSAPP}?text=${encodeURIComponent(text)}`;
+function refreshWaLinks(){
+  $('#heroWa').href = wa("Hello Spoedit, I have a question.");
+  $('#footWa').href = wa("Hello Spoedit, I have a question.");
+  $('#docWa').href = wa("Hello Spoedit, I need help editing a document.");
+}
+refreshWaLinks();
 
 const naira = n => '₦' + Number(n).toLocaleString('en-NG');
 const msg = (el, cls, t) => { el.className = 'msg ' + cls; el.textContent = t; };
@@ -499,22 +520,24 @@ const toolNames = {passport:'Passport photo',enhance:'Blurry photo fix',iphone:'
 /* ---------- visitor identity + server state ---------- */
 let uid = localStorage.getItem('spo_uid');
 if(!uid){ uid = (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(16)+Math.random().toString(16).slice(2)+'0000000000000000').slice(0,40); localStorage.setItem('spo_uid',uid); }
-const ME = {free:0, credits:{}, banned:false, prices:{}, ready:false, error:null};
+const ME = {free:0, credits:{}, banned:false, prices:{}, ready:false, error:null, offline:false};
+const lfree = () => { const v = localStorage.getItem('spo_lfree'); return v===null ? 2 : +v; };
 async function api(path, body){
   const r = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','x-uid':uid},body:JSON.stringify(body||{})});
   let data = {}; try{ data = await r.json(); }catch{}
   return {status:r.status, ok:r.ok, data};
 }
 async function loadMe(){
-  try{ const r = await api('/api/me'); if(r.ok) Object.assign(ME, r.data, {ready:true, error:null}); else ME.error = r.data.error || 'error'; }
+  try{ const r = await api('/api/me'); if(r.ok){ Object.assign(ME, r.data, {ready:true, error:null}); if(r.data.pay && r.data.pay.whatsappNumber){ window.__waNum = r.data.pay.whatsappNumber; refreshWaLinks(); } } else ME.error = r.data.error || 'error'; }
   catch(e){ ME.error = 'network'; }
+  ME.offline = !ME.ready || !!ME.error;
   updateBadge(); paintPrices(); return ME;
 }
 const credits = t => (ME.credits && ME.credits[t]) || 0;
 const wmOn = () => !(credits(currentTool) > 0);
 function updateBadge(){
   const b = $('#badge');
-  if(ME.error==='db_not_configured') b.textContent = 'Setup in progress';
+  if(ME.offline) b.innerHTML = `Free trials left: <b>${lfree()}</b>`;
   else if(ME.banned) b.textContent = 'Account suspended';
   else { const paid = credits(currentTool); b.innerHTML = paid>0 ? `Paid downloads here: <b>${paid}</b>` : `Free trials left: <b>${ME.free||0}</b>`; }
 }
@@ -528,11 +551,17 @@ function paintPrices(){
 }
 
 /* ---------- payment modal ---------- */
-let payTimer = null;
+let payTimer = null, lastRef = '';
+const FALLBACK_PRICE = 500;
+const DEFAULT_PAY = {whatsapp:true, bank:{enabled:true, name:'Kuda Bank', number:'2013463188', holder:''}};
+const payCfg = () => (ME.pay && !ME.offline) ? ME.pay : DEFAULT_PAY;
+const localRef = () => 'SPO-' + Math.random().toString(36).slice(2,8).toUpperCase();
 function openPay(){
   const t = currentTool, pr = ME.prices[t];
-  $('#pay-top').textContent = `${toolNames[t]}: ${pr!==undefined ? naira(pr) : ''} per clean download.` + (ME.free>0 ? '' : ' Your free trials are used up.');
+  $('#pay-top').textContent = (pr!==undefined ? `${toolNames[t]}: ${naira(pr)} per clean download.` : `${toolNames[t]}: message us on WhatsApp to get your clean file.`) + ((ME.offline ? lfree() : ME.free)>0 ? '' : ' Your free trials are used up.');
   msg($('#pay-msg'),'',''); msg($('#pay-ref'),'',''); $('#pay-phone').value = localStorage.getItem('spo_phone') || '';
+  const cfg = payCfg(); lastRef = ''; $('#bank-box').hidden = true; $('#pay-proof').hidden = true;
+  $('#pay-bank').hidden = !cfg.bank.enabled; $('#pay-wa').hidden = !cfg.whatsapp; $('#pay-bank').textContent = `Pay by bank transfer (${cfg.bank.name})`;
   $('#pay').classList.add('on'); clearInterval(payTimer); payTimer = setInterval(()=>checkPay(true), 15000);
 }
 function closePay(){ $('#pay').classList.remove('on'); clearInterval(payTimer); }
@@ -541,8 +570,14 @@ $('#pay').addEventListener('click', e => { if(e.target.id==='pay') closePay(); }
 document.addEventListener('keydown', e => { if(e.key==='Escape') closePay(); });
 $('#pay-wa').onclick = async () => {
   const btn = $('#pay-wa'), phone = $('#pay-phone').value.trim(); if(phone) localStorage.setItem('spo_phone', phone);
+  if(ME.offline){
+    const ref = 'SPO-' + Math.random().toString(36).slice(2,8).toUpperCase(), url = wa(`Hello Spoedit, I want to pay for: ${toolNames[currentTool]}. Ref: ${ref}. Please send payment details.`);
+    lastRef = ref; msg($('#pay-ref'),'ok',`Your reference: ${ref}`);
+    if(!window.open(url,'_blank')){ const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' Open WhatsApp'; $('#pay-ref').appendChild(a); }
+    return;
+  }
   const w = window.open('', '_blank'); btn.disabled = true;
-  const r = await api('/api/pay',{service:currentTool, phone}).catch(()=>null);
+  const r = await api('/api/pay',{service:currentTool, phone, method:'whatsapp'}).catch(()=>null);
   btn.disabled = false;
   if(!r || !r.ok){
     if(w) w.close();
@@ -550,21 +585,48 @@ $('#pay-wa').onclick = async () => {
     return;
   }
   const url = wa(`Hello Spoedit, I want to pay ${naira(r.data.amount)} for: ${toolNames[currentTool]}. Ref: ${r.data.ref}. Please send payment details.`);
-  msg($('#pay-ref'),'ok',`Your reference: ${r.data.ref}`);
+  lastRef = r.data.ref; msg($('#pay-ref'),'ok',`Your reference: ${r.data.ref}`);
   if(w) w.location.href = url;
   else { const a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' Open WhatsApp'; $('#pay-ref').appendChild(a); }
 };
 async function checkPay(silent){
   await loadMe();
+  if(ME.offline){ if(!silent) msg($('#pay-msg'),'ok','Send us the WhatsApp message and we will deliver your clean file once your payment is confirmed.'); return; }
   if(credits(currentTool) > 0){ msg($('#pay-msg'),'ok','Payment confirmed! Tap Download to get your clean file.'); refreshAll(); setTimeout(closePay,1600); }
   else if(!silent) msg($('#pay-msg'),'err','Not confirmed yet. We confirm once we see your payment. Try again in a few minutes.');
 }
-$('#pay-check').onclick = () => checkPay(false);
+$('#pay-bank').onclick = async () => {
+  const btn = $('#pay-bank'), phone = $('#pay-phone').value.trim(), payer = $('#pay-payer').value.trim(), bk = payCfg().bank;
+  if(phone) localStorage.setItem('spo_phone', phone);
+  let ref, amount = ME.prices[currentTool];
+  if(ME.offline){ ref = localRef(); if(amount===undefined) amount = FALLBACK_PRICE; }
+  else {
+    btn.disabled = true; const r = await api('/api/pay',{service:currentTool, phone, payer, method:'bank'}).catch(()=>null); btn.disabled = false;
+    if(!r || !r.ok){ msg($('#pay-msg'),'err', r&&r.status===403 ? 'Your account is suspended. Please contact us on WhatsApp.' : r&&r.status===429 ? 'Too many requests. Try again later.' : 'Could not start the payment. Check your connection and try again.'); return; }
+    ref = r.data.ref; amount = r.data.amount;
+  }
+  lastRef = ref;
+  $('#bk-name').textContent = bk.name; $('#bk-num').textContent = bk.number; $('#bk-amt').textContent = naira(amount); $('#bk-ref').textContent = ref;
+  $('#bk-holder').textContent = bk.holder || ''; $('#bk-holder-row').hidden = !bk.holder; $('#bank-box').hidden = false;
+  const proof = $('#pay-proof'); proof.href = wa(`Hello Spoedit, I have paid ${naira(amount)} by bank transfer to ${bk.name} ${bk.number} for: ${toolNames[currentTool]}. Ref: ${ref}.`); proof.hidden = false;
+  msg($('#pay-ref'),'ok',`Put ${ref} in the transfer narration if you can.`);
+};
+$('#bk-copy').onclick = async () => {
+  const n = $('#bk-num').textContent; try{ await navigator.clipboard.writeText(n); }catch{ const t = document.createElement('textarea'); t.value = n; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+  $('#bk-copy').textContent = 'Copied'; setTimeout(()=>{ $('#bk-copy').textContent = 'Copy'; },1500);
+};
+$('#pay-check').onclick = async () => { if(lastRef && !ME.offline) await api('/api/pay',{claim:lastRef}).catch(()=>{}); checkPay(false); };
 
+async function localExport(doExport){
+  if(lfree()<=0){ openPay(); return; }
+  localStorage.setItem('spo_lfree', lfree()-1);
+  try{ await doExport(true); }catch(e){ console.error(e); alert('The download failed. Please try again.'); }
+  updateBadge(); refreshAll(); confetti();
+}
 /* The server decides: paid credit (clean) > free trial (watermark) > ask to pay */
 async function exportFlow(doExport){
   if(!ME.ready) await loadMe();
-  if(ME.error==='db_not_configured'){ alert('This site is still being set up. Please try again later.'); return; }
+  if(ME.offline) return localExport(doExport);
   let r; try{ r = await api('/api/consume',{service:currentTool}); }catch(e){ alert('Network problem. Check your connection and try again.'); return; }
   if(r.status===403){ ME.banned = true; updateBadge(); alert('Your account has been suspended. Contact us on WhatsApp if you think this is a mistake.'); return; }
   if(r.status===402){ await loadMe(); openPay(); return; }
@@ -574,11 +636,24 @@ async function exportFlow(doExport){
 }
 
 /* ---------- helpers ---------- */
-function loadImage(file){
+function loadImage(file, max=3000){
   return new Promise((res,rej)=>{
-    const url = URL.createObjectURL(file); const img = new Image();
-    img.onload = ()=>res(img); img.onerror = ()=>rej(new Error('Could not read this image.')); img.src = url;
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      const m=Math.max(img.naturalWidth,img.naturalHeight);
+      if(m<=max){ img.srcBlob=file; return res(img); }
+      const k=max/m, c=mkCanvas(Math.round(img.naturalWidth*k),Math.round(img.naturalHeight*k)), type=file.type==='image/png'?'image/png':'image/jpeg';
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
+      c.toBlob(bl=>{ const i2=new Image(); i2.onload=()=>{ i2.srcBlob=bl; res(i2); }; i2.onerror=()=>rej(new Error('Could not read this image.')); i2.src=URL.createObjectURL(bl); },type,.92);
+    };
+    img.onerror=()=>rej(new Error('This photo format is not supported by your browser. Please use a JPG or PNG photo. (iPhone: Settings > Camera > Formats > Most Compatible.)'));
+    img.src=url;
   });
+}
+function shrink(img,max){
+  const m=Math.max(img.naturalWidth,img.naturalHeight); if(m<=max&&img.srcBlob) return Promise.resolve(img.srcBlob);
+  const k=Math.min(1,max/m), c=mkCanvas(Math.round(img.naturalWidth*k),Math.round(img.naturalHeight*k)); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return new Promise(r=>c.toBlob(r,'image/jpeg',.92));
 }
 function mkCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
 function saveCanvas(c, name, type='image/jpeg'){
@@ -635,7 +710,8 @@ async function ppProcess(){
     busy('pp-load',true,'Removing background… first run downloads the AI model, please wait.');
     try{
       const mod = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm');
-      const blob = await mod.removeBackground(PP.file);
+      const small = await shrink(PP.img,1600);
+      const blob = await mod.removeBackground(small,{progress:(k,cur,tot)=>{ if(tot>0) $('#pp-loadtxt').textContent='Preparing the AI model… '+Math.round(cur/tot*100)+'%'; }});
       PP.cut = await loadImage(blob);
     }catch(err){ console.error(err); alert('Background removal could not load (check your internet). Showing original background instead.'); $('#pp-remove').checked=false; }
     busy('pp-load',false);
@@ -684,7 +760,7 @@ function sharpen(d, amount){
   }
   d.data.set(out);
 }
-function upscale(img, factor, maxSide=4000){
+function upscale(img, factor, maxSide=3200){
   let w=(img.naturalWidth||img.width)*factor, h=(img.naturalHeight||img.height)*factor;
   const m=Math.max(w,h); if(m>maxSide){ const r=maxSide/m; w*=r; h*=r; }
   const c=mkCanvas(Math.round(w),Math.round(h)), ctx=c.getContext('2d');
@@ -706,11 +782,14 @@ function photoTool(p, mode){
   };
   $('#'+p+'-run').onclick = async ()=>{
     if(!T.img) return; busy(p+'-load',true); await tick();
-    const f=+$('#'+p+'-scale').value, s=+$('#'+p+'-str').value;
-    const c=upscale(T.img,f), ctx=c.getContext('2d'), d=ctx.getImageData(0,0,c.width,c.height);
-    if(mode==='enhance'){ sharpen(d,s); sharpen(d,s*.5); autoLevels(d,.2); adjust(d,{contrast:1.04,sat:1.04}); }
-    else { autoLevels(d,.35); adjust(d,{contrast:1+.12*s,sat:1+.18*s,bright:4*s,warm:2*s}); sharpen(d,.9*s); }
-    ctx.putImageData(d,0,0); T.result=c; busy(p+'-load',false); $('#'+p+'-dl').disabled=false; paint();
+    try{
+      const f=+$('#'+p+'-scale').value, s=+$('#'+p+'-str').value;
+      const c=upscale(T.img,f), ctx=c.getContext('2d'), d=ctx.getImageData(0,0,c.width,c.height);
+      if(mode==='enhance'){ sharpen(d,s); if(c.width*c.height<5e6) sharpen(d,s*.5); autoLevels(d,.2); adjust(d,{contrast:1.04,sat:1.04}); }
+      else { autoLevels(d,.35); adjust(d,{contrast:1+.12*s,sat:1+.18*s,bright:4*s,warm:2*s}); sharpen(d,.9*s); }
+      ctx.putImageData(d,0,0); T.result=c; $('#'+p+'-dl').disabled=false; paint();
+    }catch(err){ console.error(err); alert('This photo is too large for your device to process. Try a smaller photo or choose "Keep size".'); }
+    busy(p+'-load',false);
   };
   function paint(){
     if(!T.result) return; const out=$('#'+p+'-canvas'); out.width=T.result.width; out.height=T.result.height;

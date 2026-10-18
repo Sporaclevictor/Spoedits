@@ -1,41 +1,42 @@
 # Spoedit: deploy on Vercel
 
-## What is in this folder
-- `index.html`: the public site (passport photo, blurry fix, iPhone look, poster, invoice and receipt, ID card, document editor)
-- `admin.html`: your admin dashboard at `yoursite.com/admin`
-- `api/`: the server code (credits, free trials, payments, bans, prices)
-- `lib/core.js`, `vercel.json`, `package.json`: shared code and config
+## Upload and go
+1. Put this whole folder in a GitHub repo (keep it **private**), then on vercel.com choose
+   **Add New > Project** and import it. Leave all build settings empty. Click Deploy.
+   (Or run `npx vercel` inside the folder.)
+2. The site works straight away: all tools run, and every visitor gets 2 free watermarked downloads.
+3. Admin page: `yoursite.com/admin`  Password: `Sirprof123...`
 
-## Deploy (about 10 minutes)
-1. Put this whole folder in a GitHub repo, then on vercel.com choose **Add New, Project** and import it.
-   (Or run `npx vercel` inside the folder.) Leave every build setting empty.
-2. In your Vercel project open **Storage**, then **Create Database**, then choose **Upstash Redis**
-   (free plan is enough). Connect it to the project. Vercel adds the database variables for you.
-3. Open **Settings, Environment Variables** and add:
-   - `ADMIN_PASSWORD`: a long password only you know
-   - `ADMIN_SECRET`: any long random text (used to sign admin sessions)
-   - optional: `FREE_TRIALS` (default 2), `FREE_PER_IP` (default 10)
-4. **Redeploy** (Deployments, the three dots, Redeploy) so the variables take effect.
-5. Visit `/admin` and sign in.
+## Turn on payments, price changes and bans (2 minutes)
+Without a database the site runs in trial-only mode. To switch on the full admin features:
+1. In your Vercel project open **Storage > Create Database > Upstash Redis** (free plan) and connect it to the project.
+2. Click **Redeploy** (Deployments > the three dots > Redeploy).
+3. Open `/admin`. The yellow "Database not connected" notice disappears.
+
+## Change the admin password
+The password is set in `api/admin.js` as a default. To change it without editing code, add an environment
+variable `ADMIN_PASSWORD` in Vercel (Settings > Environment Variables) and redeploy. Pick something longer
+and harder to guess than the default.
 
 ## How payments work
-1. A visitor uses a tool. After 2 free downloads (watermarked) the pay window opens.
-2. They tap **Pay on WhatsApp**. The site creates a payment reference (e.g. SPO-1A2B3C) and opens
-   WhatsApp to 09124154453 with that reference and the current price.
-3. They pay you. In `/admin`, **Payments**, you tap **Confirm payment**. They get one clean download for that tool.
-4. They tap **I've paid** on the site (it also checks automatically) and download without a watermark.
+Customers can pay two ways. You control both in `/admin > Prices & users > Payment options`.
+- **Bank transfer (Kuda 2013463188):** the site shows the account number (with a Copy button), the amount and a reference.
+  The customer transfers, then taps **I've paid**. The payment shows in `/admin > Payments` as "customer says paid".
+- **WhatsApp:** opens a chat to your number with the reference and price.
+
+When the money reaches your account, tap **Confirm payment**. The customer gets one clean download for that tool.
+They tap **I've paid** again (it also checks automatically) and download without a watermark.
 
 ## Admin panels
-- **Payments**: pending, confirmed and rejected payments, search, confirm or reject, revenue total.
-- **Prices & users**: raise or lower each service's price (use −50 / +50 or type a number, then Save).
-  Ban or unban users, and add or remove credits by hand (useful for refunds or gifts).
-  New prices apply to new payment requests straight away.
+- **Payments:** pending, confirmed and rejected payments, search, confirm or reject, revenue total.
+- **Prices & users:** turn bank transfer or WhatsApp on or off, edit the bank name, account number, account name and WhatsApp number,
+  change each service's price (−50 / +50 or type a number, then Save), ban or unban users,
+  add or remove credits by hand.
 
-## Know the limits
-- Images and documents are processed in the visitor's browser. The server controls who may download
-  and whether the watermark is applied, but a technically skilled person could still strip the watermark
-  by editing the page code. For full protection you need server-side image processing.
-- Users are identified by a browser ID (plus the WhatsApp number if they enter one). A banned person
-  can switch browsers or clear their data. Bans on a phone number are harder to dodge.
-- Always check that you received the money before you confirm. The admin page does not talk to your bank.
-- ID card tool is for organisation, school, staff, member and event cards. It refuses government-style cards.
+## Good to know
+- Photos and documents are processed in the visitor's browser. Very large phone photos are shrunk automatically
+  so they upload and process smoothly.
+- iPhone HEIC photos that a browser cannot open show a clear message asking for JPG or PNG.
+- Always check you received the money before you confirm a payment.
+- A determined technical user could strip the watermark by editing the page code. Full protection needs server-side processing.
+- The ID card tool is for organisation, school, staff, member and event cards. It refuses government-style cards.
