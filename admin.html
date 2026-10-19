@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Spoedit Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#fff;--mist:#eef3ef;--ink:#12201a;--muted:#5a6b62;--green:#0e6b4a;--green-d:#0a4d35;--flash:#ffd23f;--line:#d5e0d9;--danger:#c0392b}
+*{box-sizing:border-box;margin:0}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);background:var(--mist);line-height:1.5}
+h1,h2,h3{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.02em;line-height:1.1}
+:focus-visible{outline:3px solid var(--flash);outline-offset:2px}
+.wrap{width:min(1000px,94%);margin-inline:auto}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.bar{display:flex;justify-content:space-between;align-items:center;padding:12px 0;gap:10px}
+.logo{font-family:'Bricolage Grotesque';font-weight:800;font-size:1.35rem}
+.logo small{font:500 .8rem 'DM Sans';color:var(--muted);margin-left:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border-radius:10px;border:2px solid var(--green);background:var(--green);color:#fff;font:700 .92rem 'DM Sans';cursor:pointer;transition:background .15s,transform .15s}
+.btn:hover{background:var(--green-d)}.btn:active{transform:scale(.97)}
+.btn.alt{background:#fff;color:var(--green)}.btn.alt:hover{background:var(--mist)}
+.btn.bad{background:#fff;border-color:var(--danger);color:var(--danger)}.btn.bad:hover{background:#fde8e5}
+.btn.sm{padding:7px 12px;font-size:.85rem;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+input,select{padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;font:400 1rem 'DM Sans';color:var(--ink);min-width:0}
+label{font-size:.88rem;font-weight:700;display:block;margin-bottom:5px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+#login{min-height:100vh;display:grid;place-items:center;padding:16px}
+#login .card{width:min(380px,100%);display:flex;flex-direction:column;gap:12px;animation:pop .4s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.pwrow{display:flex;gap:8px}.pwrow input{flex:1}
+.err{color:var(--danger);font-size:.9rem;min-height:1.2em}.ok{color:var(--green)}
+#app{display:none;padding-bottom:50px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{display:block;font:800 1.7rem 'Bricolage Grotesque'}.stat span{color:var(--muted);font-size:.85rem}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{padding:10px 18px;border-radius:99px;border:1.5px solid var(--line);background:#fff;font:700 .95rem 'DM Sans';cursor:pointer}
+.tab[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.panel{display:none}.panel.on{display:block;animation:pop .35s cubic-bezier(.2,.8,.2,1)}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tools input{flex:1;min-width:160px}
+.chip{padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);background:#fff;cursor:pointer;font:500 .88rem 'DM Sans'}
+.chip[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.item .main{min-width:210px;flex:1}
+.item .t{font-weight:700}.item .m{color:var(--muted);font-size:.85rem}
+.item .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700}
+.pill.pending{background:#fff4c7;color:#7a5b00}.pill.confirmed{background:#d6f2e3;color:#0a5a3b}.pill.rejected,.pill.banned{background:#fde1dd;color:#9b2a1d}.pill.active{background:#d6f2e3;color:#0a5a3b}
+h2{font-size:1.4rem;margin:6px 0 12px}
+.prices{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:28px}
+.price{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}
+.price .n{font-weight:700;margin-bottom:8px}
+.stepper{display:flex;gap:6px;align-items:center}
+.stepper input{width:100%;text-align:center;font-weight:700}
+.stepper .btn{padding:9px 12px}
+.price .row2{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px}
+.empty{color:var(--muted);padding:24px;text-align:center;background:#fff;border:1.5px dashed var(--line);border-radius:14px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-6px)}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:10px}
+.toggle input{width:20px;height:20px;accent-color:var(--green)}
+.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form2 input{width:100%}
+@media (max-width:560px){.form2{grid-template-columns:1fr}}
+@media (max-width:560px){.stats{grid-template-columns:1fr 1fr 1fr;gap:8px}.stat b{font-size:1.3rem}.item .acts{width:100%}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.pwrow{display:flex;gap:8px}.pwrow input{flex:1}
+.toggle{display:flex;align-items:center;gap:10px;font-weight:700;margin-bottom:10px}
+.toggle input{width:20px;height:20px;accent-color:var(--green)}
+.form2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form2 input{width:100%}
+@media (max-width:560px){.form2{grid-template-columns:1fr}}
+.msg{font-size:.9rem;min-height:1.2em}.msg.err{color:var(--danger)}.msg.ok{color:var(--green)}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="card">
+    <h1 id="l-title" style="font-size:1.8rem">Spoedit admin</h1>
+    <p id="l-sub" style="color:var(--muted);font-size:.92rem">Sign in with your admin email and password.</p>
+    <div><label for="em">Email</label><input type="email" id="em" style="width:100%" autocomplete="username" autocapitalize="none"></div>
+    <div><label for="pw">Password</label>
+      <div class="pwrow"><input type="password" id="pw" style="width:100%" autocomplete="current-password"><button type="button" class="btn alt sm" id="showpw">Show</button></div></div>
+    <div id="pw2wrap" hidden><label for="pw2">Confirm password</label><input type="password" id="pw2" style="width:100%" autocomplete="new-password"></div>
+    <button class="btn" id="go">Sign in</button>
+    <div class="err" id="lerr" role="alert"></div>
+    <div id="forgot" style="font-size:.88rem"><a href="#" id="forgot-link" style="color:var(--green);font-weight:700">Forgot your password?</a><div class="ok" id="lok" style="margin-top:6px"></div></div>
+  </div>
+</div>
+
+<div id="app">
+  <header><div class="wrap bar">
+    <div class="logo">Spoedit<small id="who">Admin</small></div>
+    <div style="display:flex;gap:8px"><a class="btn alt sm" href="/" target="_blank" rel="noopener">View site</a><button class="btn alt sm" id="out">Sign out</button></div>
+  </div></header>
+
+  <main class="wrap">
+    <div class="stats">
+      <div class="stat"><b id="s-pend">0</b><span>Awaiting confirmation</span></div>
+      <div class="stat"><b id="s-conf">0</b><span>Confirmed payments</span></div>
+      <div class="stat"><b id="s-rev">₦0</b><span>Confirmed revenue</span></div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-p="pay" aria-selected="true">Payments</button>
+      <button class="tab" role="tab" data-p="mgmt" aria-selected="false">Prices &amp; users</button>
+    </div>
+
+    <!-- PANEL 1: PAYMENTS -->
+    <section class="panel on" id="panel-pay">
+      <div class="tools">
+        <button class="chip" data-f="pending" aria-pressed="true">Pending</button>
+        <button class="chip" data-f="confirmed" aria-pressed="false">Confirmed</button>
+        <button class="chip" data-f="rejected" aria-pressed="false">Rejected</button>
+        <button class="chip" data-f="all" aria-pressed="false">All</button>
+        <input type="search" id="psearch" placeholder="Search reference, phone or service" aria-label="Search payments">
+      </div>
+      <div class="list" id="plist"></div>
+    </section>
+
+    <!-- PANEL 2: PRICES, PAYMENT OPTIONS & USERS -->
+    <section class="panel" id="panel-mgmt">
+      <h2>Payment options</h2>
+      <div class="card" style="margin-bottom:28px">
+        <label class="toggle"><input type="checkbox" id="o-bank"> Bank transfer</label>
+        <div class="form2" style="margin-bottom:14px">
+          <div><label for="o-bname">Bank name</label><input type="text" id="o-bname" maxlength="40"></div>
+          <div><label for="o-bnum">Account number (10 digits)</label><input type="text" id="o-bnum" inputmode="numeric" maxlength="10"></div>
+          <div style="grid-column:1/-1"><label for="o-bhold">Account name (shown to customers)</label><input type="text" id="o-bhold" maxlength="60" placeholder="e.g. Your full name or business name"></div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="o-wa"> WhatsApp payment</label>
+        <div style="margin-bottom:14px"><label for="o-wanum">WhatsApp number</label><input type="text" id="o-wanum" inputmode="tel" style="width:100%;max-width:300px"></div>
+        <button class="btn" id="o-save">Save payment options</button>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:8px">Changes go live immediately. At least one option must stay on.</p>
+      </div>
+
+      <h2>Prices</h2>
+      <div class="prices" id="prices"></div>
+
+      <h2>Users</h2>
+      <div class="tools"><input type="search" id="usearch" placeholder="Search user ID or phone" aria-label="Search users"></div>
+      <div class="list" id="ulist"></div>
+
+      <h2 style="margin-top:28px">My account</h2>
+      <div class="card">
+        <p style="margin-bottom:10px">Signed in as <b id="acc-email"></b></p>
+        <button class="btn alt" id="acc-reset">Email me a password reset link</button>
+        <div class="msg" id="acc-msg" style="margin-top:8px;font-size:.9rem"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="module">
+import { firebaseConfig } from './firebase-config.js';
+
+const $=s=>document.querySelector(s);
+const naira=n=>'₦'+Number(n).toLocaleString('en-NG');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ms=t=>t&&t.toMillis?t.toMillis():(typeof t==='number'?t:0);
+const when=t=>ms(t)?new Date(ms(t)).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'just now';
+const SERVICES={passport:'Passport photo',enhance:'Blurry photo fix',iphone:'iPhone look',poster:'Poster & flyer',invoice:'Invoice & receipt',idcard:'ID card',doc:'Document edit'};
+const DEF={prices:Object.fromEntries(Object.keys(SERVICES).map(k=>[k,500])),methods:{whatsapp:true,bank:true},whatsappNumber:'2348118293462',bank:{name:'Kuda Bank',number:'2013463188',holder:''}};
+const merge=d=>({prices:{...DEF.prices,...(d.prices||{})},methods:{...DEF.methods,...(d.methods||{})},whatsappNumber:d.whatsappNumber||DEF.whatsappNumber,bank:{...DEF.bank,...(d.bank||{})}});
+
+let auth,db,A,F,me=null,mode='login',settingUp=false,unsubs=[];
+let PAYS=[],USERS=[],SET=DEF,FILTER='pending';
+
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2400); }
+function paintMode(){
+  const s=mode==='setup';
+  $('#l-title').textContent=s?'Create your admin account':'Spoedit admin';
+  $('#l-sub').textContent=s?'First time here. Choose the email and password you will use to sign in.':'Sign in with your admin email and password.';
+  $('#pw2wrap').hidden=!s; $('#go').textContent=s?'Create account':'Sign in'; $('#forgot').hidden=s;
+  $('#pw').autocomplete=s?'new-password':'current-password';
+}
+const errText=e=>{
+  const c=e&&e.code||'';
+  if(c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found'||c==='auth/invalid-login-credentials') return 'Wrong email or password.';
+  if(c==='auth/invalid-email') return 'Enter a valid email address.';
+  if(c==='auth/weak-password') return 'Use a password of at least 8 characters.';
+  if(c==='auth/email-already-in-use') return 'That email already has an account. Sign in instead, or use "Forgot your password?".';
+  if(c==='auth/too-many-requests') return 'Too many attempts. Wait a few minutes and try again.';
+  if(c==='auth/network-request-failed') return 'No internet connection. Try again.';
+  if(c==='auth/operation-not-allowed') return 'Email/Password sign-in is not switched on in Firebase yet (Authentication > Sign-in method).';
+  if(c==='permission-denied') return 'Firebase refused this. Check that the Firestore rules from the setup guide are published.';
+  return 'Something went wrong ('+(c||e.message||'unknown')+').';
+};
+const fail=t=>{ $('#lerr').textContent=t; };
+
+/* ---------- boot ---------- */
+async function boot(){
+  paintMode();
+  if(!firebaseConfig.apiKey||firebaseConfig.apiKey.startsWith('PASTE')){ fail('Firebase is not connected yet. Fill in firebase-config.js with your Firebase settings (see the setup guide).'); $('#go').disabled=true; return; }
+  try{
+    const base='https://www.gstatic.com/firebasejs/10.14.1/';
+    const { initializeApp }=await import(base+'firebase-app.js');
+    A=await import(base+'firebase-auth.js'); F=await import(base+'firebase-firestore.js');
+    const app=initializeApp(firebaseConfig); auth=A.getAuth(app); db=F.getFirestore(app);
+  }catch(e){ fail('Could not load Firebase. Check your internet connection and reload.'); return; }
+  A.onAuthStateChanged(auth,handleUser);
+}
+async function handleUser(u){
+  if(settingUp) return;
+  if(u&&!u.isAnonymous){
+    let isAdmin=false;
+    try{ isAdmin=(await F.getDoc(F.doc(db,'admins',u.uid))).exists(); }catch(e){}
+    if(isAdmin){ me=u; return startApp(u); }
+    fail('This account is not an admin.'); await A.signOut(auth);
+  }
+  stopApp(); $('#login').style.display='grid'; $('#app').style.display='none';
+  try{ mode=(await F.getDoc(F.doc(db,'meta','setup'))).exists()?'login':'setup'; }catch(e){ mode='login'; }
+  paintMode();
+}
+$('#showpw').onclick=()=>{ const i=$('#pw'),show=i.type==='password'; i.type=show?'text':'password'; $('#pw2').type=i.type; $('#showpw').textContent=show?'Hide':'Show'; };
+async function submit(){
+  fail(''); $('#lok').textContent=''; const email=$('#em').value.trim(), pw=$('#pw').value;
+  if(!email||!pw) return fail('Enter your email and password.');
+  if(mode==='setup'){
+    if(pw.length<8) return fail('Use a password of at least 8 characters.');
+    if(pw!==$('#pw2').value) return fail('The two passwords do not match.');
+  }
+  $('#go').disabled=true;
+  try{
+    if(mode==='setup'){
+      settingUp=true;
+      const cred=await A.createUserWithEmailAndPassword(auth,email,pw);
+      try{
+        const b=F.writeBatch(db);
+        b.set(F.doc(db,'admins',cred.user.uid),{email,created:F.serverTimestamp()});
+        b.set(F.doc(db,'meta','setup'),{by:cred.user.uid,created:F.serverTimestamp()});
+        await b.commit();
+        await F.setDoc(F.doc(db,'settings','app'),{prices:DEF.prices,methods:DEF.methods,whatsappNumber:DEF.whatsappNumber,bank:DEF.bank},{merge:true});
+      }catch(e){
+        try{ await A.deleteUser(cred.user); }catch{}
+        settingUp=false; mode='login'; paintMode();
+        $('#go').disabled=false; return fail(e.code==='permission-denied'?'An admin account already exists. Sign in instead.':errText(e));
+      }
+      settingUp=false; me=cred.user; startApp(me);
+    } else {
+      await A.signInWithEmailAndPassword(auth,email,pw);
+    }
+    $('#pw').value=''; $('#pw2').value='';
+  }catch(e){ settingUp=false; fail(errText(e)); }
+  $('#go').disabled=false;
+}
+$('#go').onclick=submit; ['em','pw','pw2'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); }));
+$('#forgot-link').onclick=async e=>{
+  e.preventDefault(); fail(''); const email=$('#em').value.trim(); if(!email) return fail('Type your email above first, then tap "Forgot your password?".');
+  try{ await A.sendPasswordResetEmail(auth,email); $('#lok').textContent='If that email has an account, a reset link is on its way. Check your inbox and spam.'; }catch(err){ fail(errText(err)); }
+};
+$('#out').onclick=async()=>{ await A.signOut(auth); };
+$('#acc-reset').onclick=async()=>{ try{ await A.sendPasswordResetEmail(auth,me.email); $('#acc-msg').className='msg ok'; $('#acc-msg').textContent='Reset link sent to '+me.email; }catch(e){ $('#acc-msg').className='msg err'; $('#acc-msg').textContent=errText(e); } };
+
+/* ---------- app ---------- */
+function startApp(u){
+  $('#login').style.display='none'; $('#app').style.display='block'; $('#who').textContent=u.email; $('#acc-email').textContent=u.email;
+  stopApp();
+  const onErr=e=>{ console.error(e); toast('Could not load data. Check the Firestore rules are published.'); };
+  unsubs.push(F.onSnapshot(F.query(F.collection(db,'payments'),F.orderBy('created','desc'),F.limit(400)),s=>{ PAYS=s.docs.map(d=>({id:d.id,...d.data()})); drawPayments(); },onErr));
+  unsubs.push(F.onSnapshot(F.query(F.collection(db,'users'),F.orderBy('last','desc'),F.limit(500)),s=>{ USERS=s.docs.map(d=>({id:d.id,...d.data()})); drawUsers(); },onErr));
+  unsubs.push(F.onSnapshot(F.doc(db,'settings','app'),s=>{ SET=s.exists()?merge(s.data()):DEF; fillSettings(); drawPrices(); },onErr));
+}
+function stopApp(){ unsubs.forEach(f=>{try{f()}catch{}}); unsubs=[]; }
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t)); document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on')); $('#panel-'+t.dataset.p).classList.add('on'); });
+
+/* payments */
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{ FILTER=c.dataset.f; document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c)); drawPayments(); });
+$('#psearch').addEventListener('input',()=>drawPayments());
+function drawPayments(){
+  const done=PAYS.filter(p=>p.status==='confirmed');
+  $('#s-pend').textContent=PAYS.filter(p=>p.status==='pending').length; $('#s-conf').textContent=done.length; $('#s-rev').textContent=naira(done.reduce((a,p)=>a+(+p.amount||0),0));
+  const q=$('#psearch').value.trim().toLowerCase();
+  const rows=PAYS.filter(p=>(FILTER==='all'||p.status===FILTER)&&(!q||[p.id,p.phone,SERVICES[p.service],p.payer,p.uid].join(' ').toLowerCase().includes(q)));
+  $('#plist').innerHTML=rows.length?rows.map(p=>`
+    <div class="item">
+      <div class="main">
+        <div class="t">${esc(p.id)} · ${esc(SERVICES[p.service]||p.service)} · ${naira(p.amount)} <span class="pill ${esc(p.status)}">${esc(p.status)}</span>${p.status==='pending'&&p.claimed?' <span class="pill confirmed">customer says paid</span>':''}</div>
+        <div class="m">${p.method==='bank'?'Bank transfer':'WhatsApp'}${p.payer?' · Payer: '+esc(p.payer):''} · ${when(p.created)} · User ${esc(String(p.uid).slice(0,8))}${p.phone?` · <a href="https://wa.me/${esc(String(p.phone).replace(/^0/,'234').replace(/\D/g,''))}" target="_blank" rel="noopener">${esc(p.phone)}</a>`:' · no phone given'}</div>
+      </div>
+      ${p.status==='pending'?`<div class="acts"><button class="btn sm" data-act="confirm" data-ref="${esc(p.id)}">Confirm payment</button><button class="btn bad sm" data-act="reject" data-ref="${esc(p.id)}">Reject</button></div>`:''}
+    </div>`).join(''):'<div class="empty">Nothing here yet.</div>';
+}
+$('#plist').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-act]'); if(!b) return; const {act,ref}=b.dataset; const p=PAYS.find(x=>x.id===ref); if(!p) return;
+  if(!confirm(act==='confirm'?`Confirm that you received ${naira(p.amount)} for ${SERVICES[p.service]} (${ref})?\nThe customer gets 1 clean download.`:`Reject payment ${ref}?`)) return;
+  b.disabled=true;
+  try{
+    if(act==='confirm'){
+      await F.runTransaction(db,async tx=>{
+        const pr=F.doc(db,'payments',ref), ps=await tx.get(pr);
+        if(!ps.exists()||ps.data().status!=='pending') throw new Error('already');
+        const ur=F.doc(db,'users',ps.data().uid), us=await tx.get(ur); if(!us.exists()) throw new Error('nouser');
+        tx.update(pr,{status:'confirmed',confirmedAt:F.serverTimestamp()});
+        tx.update(ur,{['cr_'+ps.data().service]:F.increment(1)});
+      });
+      toast('Payment confirmed');
+    } else { await F.updateDoc(F.doc(db,'payments',ref),{status:'rejected',rejectedAt:F.serverTimestamp()}); toast('Payment rejected'); }
+  }catch(err){ toast(err.message==='already'?'Already handled':'Failed: '+(err.code||err.message)); b.disabled=false; }
+});
+
+/* payment options */
+function fillSettings(){
+  if(document.activeElement&&$('#panel-mgmt').contains(document.activeElement)&&document.activeElement.id.startsWith('o-')) return;
+  $('#o-bank').checked=SET.methods.bank; $('#o-wa').checked=SET.methods.whatsapp; $('#o-bname').value=SET.bank.name; $('#o-bnum').value=SET.bank.number; $('#o-bhold').value=SET.bank.holder; $('#o-wanum').value=SET.whatsappNumber;
+}
+function normPhone(p){ let d=String(p||'').replace(/\D/g,''); if(d.length===11&&d.startsWith('0')) d='234'+d.slice(1); return d.length>=10&&d.length<=15?d:''; }
+$('#o-save').onclick=async()=>{
+  const bank=$('#o-bank').checked, wa=$('#o-wa').checked, num=$('#o-bnum').value.replace(/\D/g,''), wnum=normPhone($('#o-wanum').value);
+  if(!bank&&!wa) return toast('Keep at least one payment option on');
+  if(bank&&!/^\d{10}$/.test(num)) return toast('Account number must be 10 digits');
+  if(!wnum) return toast('Enter a valid WhatsApp number');
+  const clean=(v,n)=>String(v||'').replace(/[<>]/g,'').trim().slice(0,n);
+  const btn=$('#o-save'); btn.disabled=true;
+  try{ await F.setDoc(F.doc(db,'settings','app'),{methods:{bank,whatsapp:wa},whatsappNumber:wnum,bank:{name:clean($('#o-bname').value,40)||'Kuda Bank',number:num||'2013463188',holder:clean($('#o-bhold').value,60)}},{merge:true}); toast('Payment options saved'); }
+  catch(e){ toast('Could not save: '+(e.code||e.message)); }
+  btn.disabled=false;
+};
+
+/* prices */
+function drawPrices(){
+  if(document.activeElement&&$('#prices').contains(document.activeElement)) return;
+  $('#prices').innerHTML=Object.keys(SERVICES).map(k=>`
+    <div class="price" data-k="${k}">
+      <div class="n">${esc(SERVICES[k])}</div>
+      <div class="stepper">
+        <button class="btn alt sm" data-d="-50" aria-label="Reduce by 50">−50</button>
+        <input type="number" min="0" step="50" value="${SET.prices[k]}" aria-label="${esc(SERVICES[k])} price in naira">
+        <button class="btn alt sm" data-d="50" aria-label="Increase by 50">+50</button>
+      </div>
+      <div class="row2"><span style="font-size:.85rem;color:var(--muted)">Now: <b class="cur">${naira(SET.prices[k])}</b></span><button class="btn sm" data-save>Save</button></div>
+    </div>`).join('');
+}
+$('#prices').addEventListener('click',async e=>{
+  const card=e.target.closest('.price'); if(!card) return; const inp=card.querySelector('input');
+  const d=e.target.closest('[data-d]'); if(d){ inp.value=Math.max(0,(+inp.value||0)+ +d.dataset.d); return; }
+  const sv=e.target.closest('[data-save]'); if(!sv) return;
+  const price=Math.round(Number(inp.value)); if(!Number.isFinite(price)||price<0||price>1000000) return toast('Enter a price between 0 and 1,000,000');
+  sv.disabled=true;
+  try{ await F.setDoc(F.doc(db,'settings','app'),{prices:{[card.dataset.k]:price}},{merge:true}); toast('Price saved'); }catch(err){ toast('Could not save price: '+(err.code||err.message)); }
+  sv.disabled=false;
+});
+
+/* users */
+$('#usearch').addEventListener('input',()=>drawUsers());
+function drawUsers(){
+  const q=$('#usearch').value.trim().toLowerCase();
+  const rows=USERS.filter(u=>!q||[u.id,u.phone].join(' ').toLowerCase().includes(q));
+  const opts=Object.keys(SERVICES).map(k=>`<option value="${k}">${esc(SERVICES[k])}</option>`).join('');
+  $('#ulist').innerHTML=rows.length?rows.map(u=>{
+    const cr=Object.keys(SERVICES).filter(k=>(u['cr_'+k]||0)>0).map(k=>`${esc(SERVICES[k])}: ${u['cr_'+k]}`).join(', ')||'none';
+    return `<div class="item" data-id="${esc(u.id)}">
+      <div class="main">
+        <div class="t">${esc(u.id.slice(0,8))} ${u.phone?`· ${esc(u.phone)}`:''} <span class="pill ${u.banned?'banned':'active'}">${u.banned?'banned':'active'}</span></div>
+        <div class="m">Free trials left: ${u.free??0} · Paid credits: ${cr}<br>First seen ${when(u.created)} · Last active ${when(u.last)}</div>
+      </div>
+      <div class="acts">
+        <select aria-label="Service to give credit for">${opts}</select>
+        <button class="btn alt sm" data-grant="1">+1 credit</button>
+        <button class="btn alt sm" data-grant="-1">−1</button>
+        ${u.banned?'<button class="btn sm" data-ban="unban">Unban</button>':'<button class="btn bad sm" data-ban="ban">Ban</button>'}
+      </div>
+    </div>`;}).join(''):'<div class="empty">No users yet. They appear after someone visits the site.</div>';
+}
+$('#ulist').addEventListener('click',async e=>{
+  const row=e.target.closest('.item'); if(!row) return; const id=row.dataset.id, u=USERS.find(x=>x.id===id);
+  const ban=e.target.closest('[data-ban]'), gr=e.target.closest('[data-grant]');
+  try{
+    if(ban){ if(!confirm(ban.dataset.ban==='ban'?'Ban this user? They will not be able to download or pay.':'Unban this user?')) return; await F.updateDoc(F.doc(db,'users',id),{banned:ban.dataset.ban==='ban'}); toast(ban.dataset.ban==='ban'?'User banned':'User unbanned'); }
+    else if(gr){ const k='cr_'+row.querySelector('select').value; await F.updateDoc(F.doc(db,'users',id),{[k]:Math.max(0,(u[k]||0)+ +gr.dataset.grant)}); toast('Credits updated'); }
+  }catch(err){ toast('Failed: '+(err.code||err.message)); }
+});
+
+boot();
+</script>
+</body>
+</html>

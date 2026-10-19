@@ -1,63 +1,39 @@
-# Spoedit: deploy on Vercel
+# Spoedit (Firebase version)
 
-## Files in this project
-```
-index.html      the public site
-admin.html      the admin page (/admin)
-vercel.json     Vercel settings
-package.json    Node version
-api/server.js   the whole server in ONE file
-```
-`api/server.js` MUST sit inside a folder called `api` at the top level of the project.
+Files (all in the top level of your project, no folders needed):
+- `index.html` the public site
+- `admin.html` the admin page (`/admin`)
+- `firebase-config.js` YOUR Firebase settings (you edit this one)
+- `firestore.rules` the security rules (you paste these into Firebase)
+- `vercel.json` Vercel settings
 
-## Upload and go
-1. Put these files in a GitHub repo (keep it **private**), then on vercel.com choose **Add New > Project** and import it.
-   Leave all build settings empty. Click Deploy. (Or run `npx vercel` inside the folder on a computer.)
-2. **On a phone** you cannot upload folders. In GitHub use **Add file > Create new file**, type `api/server.js` as the file name
-   (typing the `/` creates the folder), paste the contents of `server.js`, and commit. Upload the other four files normally.
-3. The site works straight away: all tools run, and every visitor gets 2 free watermarked downloads.
-4. Admin page: `yoursite.com/admin`. The first time you open it you create your admin account with your email and a password
-   (needs the database below).
+## Setup (about 15 minutes, works on a phone)
 
-## Turn on payments, price changes and bans (2 minutes)
-Without a database the site runs in trial-only mode. To switch on the full admin features:
-1. In your Vercel project open **Storage > Create Database > Upstash Redis** (free plan) and connect it to the project.
-2. Click **Redeploy** (Deployments > the three dots > Redeploy).
-3. Open `/admin`. The yellow "Database not connected" notice disappears.
+### A. Create the Firebase project
+1. Go to console.firebase.google.com and sign in with Google. Tap **Create a project**, name it `spoedit`, turn Google Analytics off, tap Create.
+2. **Authentication**: tap Build > Authentication > Get started > **Sign-in method**. Switch on **Email/Password** and **Anonymous**. Save both.
+3. **Firestore**: tap Build > Firestore Database > Create database. Pick a location near Nigeria (europe-west is fine) and choose **Production mode**.
+4. **Rules**: in Firestore open the **Rules** tab, delete everything, paste the full contents of `firestore.rules`, tap **Publish**.
+5. **Web app settings**: tap the gear icon > Project settings > scroll to Your apps > tap the **</>** (web) icon, give it any name, tap Register app.
+   Copy the four values: apiKey, authDomain, projectId, appId.
 
-## Admin account
-- **First time:** open `/admin`. If no admin exists yet you will see "Create your admin account". Enter your email and a password
-  (8+ characters). Do this right after connecting the database, before sharing the link with anyone.
-- **After that:** sign in with that email and password. In `/admin > Prices & users > Admin accounts` you can change your password
-  or add another admin.
-- **Forgot your password:** in Vercel add the environment variable `RESET_ADMIN` = `true`, redeploy, open `/admin` and create a new
-  account. Then delete `RESET_ADMIN` and redeploy again.
+### B. Put your settings in the site
+6. Open `firebase-config.js` (on GitHub: tap the file, then the pencil icon) and replace the four PASTE_... values with yours. Commit.
+7. Upload/replace `index.html`, `admin.html`, `firebase-config.js`, `firestore.rules`, `vercel.json` in your GitHub repo. Delete the old `api` folder and `package.json` if they are still there. Vercel redeploys by itself.
+8. If sign-in ever shows "unauthorized domain": Firebase > Authentication > Settings > Authorized domains > Add your `xxxx.vercel.app` domain.
 
-## How payments work
-Customers can pay two ways. You control both in `/admin > Prices & users > Payment options`.
-- **Bank transfer (Kuda 2013463188):** the site shows the account number (with a Copy button), the amount and a reference.
-  The customer transfers, then taps **I've paid**. The payment shows in `/admin > Payments` as "customer says paid".
-- **WhatsApp:** opens a chat to your number with the reference and price.
+### C. Create your admin account
+9. Open `yoursite.vercel.app/admin`. You will see **Create your admin account**. Enter your email and a password (8+ characters).
+   Do this right away. Only the first person to do it becomes admin, and nobody can create a second owner afterwards.
+10. Forgot your password later? Tap "Forgot your password?" and Firebase emails you a reset link.
 
-When the money reaches your account, tap **Confirm payment**. The customer gets one clean download for that tool.
-They tap **I've paid** again (it also checks automatically) and download without a watermark.
-
-## Admin panels
-- **Payments:** pending, confirmed and rejected payments, search, confirm or reject, revenue total.
-- **Prices & users:** turn bank transfer or WhatsApp on or off, edit the bank name, account number, account name and WhatsApp number,
-  change each service's price (−50 / +50 or type a number, then Save), ban or unban users,
-  add or remove credits by hand.
+## Using the admin page
+- **Payments:** pending payments appear live, marked "customer says paid" once the customer taps I've paid. Tap **Confirm payment** after the money reaches your account. The customer gets one clean download for that tool.
+- **Prices & users:** change each service price (−50 / +50 or type it, then Save), turn bank transfer or WhatsApp on or off, edit the Kuda details and WhatsApp number, ban or unban users, add or remove credits by hand.
 
 ## Good to know
-- Photos and documents are processed in the visitor's browser. Very large phone photos are shrunk automatically
-  so they upload and process smoothly.
-- iPhone HEIC photos that a browser cannot open show a clear message asking for JPG or PNG.
-- Always check you received the money before you confirm a payment.
-- A determined technical user could strip the watermark by editing the page code. Full protection needs server-side processing.
+- Until `firebase-config.js` is filled in, the site still works: every tool runs and visitors get 2 free watermarked downloads on their own device. Payments, price changes and bans need Firebase.
+- Photos and documents are processed in the visitor's phone, not on a server. A technical person could strip the watermark by editing the page. Full protection needs server-side processing (a paid Firebase plan).
+- Each visitor is an anonymous Firebase user. Someone who clears their browser data can get a fresh 2 free trials.
+- To change how many free trials new visitors get, change `free == 2` in `firestore.rules` and `free:2` in `index.html`.
 - The ID card tool is for organisation, school, staff, member and event cards. It refuses government-style cards.
-
-## If something does not work
-Open `yoursite.vercel.app/api/server?route=health` in your browser. You should see `"version":"email-admin-v2"` and `"database":"connected"`.
-- Page not found or "The server code was not found": `api/server.js` is missing or in the wrong place. It must be `api/server.js` at the top level, next to `index.html`. In Vercel, Settings > General > Root Directory must point at the folder that contains `index.html` and `api`.
-- `database` says NOT connected or ERROR: connect the Upstash Redis database (Storage tab) to this project and redeploy.
-- No `version` line: Vercel is still serving an old deployment. Deploy again and check the Deployments tab shows the new one as "Current".
