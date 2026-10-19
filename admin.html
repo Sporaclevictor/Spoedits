@@ -30,6 +30,7 @@ label{font-size:.88rem;font-weight:700;display:block;margin-bottom:5px}
 #login{min-height:100vh;display:grid;place-items:center;padding:16px}
 #login .card{width:min(380px,100%);display:flex;flex-direction:column;gap:12px;animation:pop .4s cubic-bezier(.2,.8,.2,1)}
 @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.pwrow{display:flex;gap:8px}.pwrow input{flex:1}
 .err{color:var(--danger);font-size:.9rem;min-height:1.2em}.ok{color:var(--green)}
 #app{display:none;padding-bottom:50px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
@@ -74,17 +75,22 @@ h2{font-size:1.4rem;margin:6px 0 12px}
 
 <div id="login">
   <div class="card">
-    <h1 style="font-size:1.8rem">Spoedit admin</h1>
-    <p style="color:var(--muted);font-size:.92rem">Enter your admin password to manage payments, prices and users.</p>
-    <div><label for="pw">Password</label><input type="password" id="pw" style="width:100%" autocomplete="current-password"></div>
+    <h1 id="l-title" style="font-size:1.8rem">Spoedit admin</h1>
+    <p id="l-sub" style="color:var(--muted);font-size:.92rem">Sign in with your admin email and password.</p>
+    <div><label for="em">Email</label><input type="email" id="em" style="width:100%" autocomplete="username" autocapitalize="none"></div>
+    <div><label for="pw">Password</label>
+      <div class="pwrow"><input type="password" id="pw" style="width:100%" autocomplete="current-password"><button type="button" class="btn alt sm" id="showpw">Show</button></div></div>
+    <div id="pw2wrap" hidden><label for="pw2">Confirm password</label><input type="password" id="pw2" style="width:100%" autocomplete="new-password"></div>
     <button class="btn" id="go">Sign in</button>
     <div class="err" id="lerr" role="alert"></div>
+    <details id="forgot" style="font-size:.85rem;color:var(--muted)"><summary style="cursor:pointer">Forgot your password?</summary>
+      <p style="margin-top:6px">In Vercel open <b>Settings, Environment Variables</b>, add <b>RESET_ADMIN</b> = <b>true</b>, then <b>Redeploy</b>. Reload this page and create a new admin account. After that, delete RESET_ADMIN and redeploy again.</p></details>
   </div>
 </div>
 
 <div id="app">
   <header><div class="wrap bar">
-    <div class="logo">Spoedit<small>Admin</small></div>
+    <div class="logo">Spoedit<small id="who">Admin</small></div>
     <div style="display:flex;gap:8px"><button class="btn alt sm" id="refresh">Refresh</button><button class="btn alt sm" id="out">Sign out</button></div>
   </div></header>
 
@@ -133,6 +139,16 @@ h2{font-size:1.4rem;margin:6px 0 12px}
       <h2>Users</h2>
       <div class="tools"><input type="search" id="usearch" placeholder="Search user ID, phone or name" aria-label="Search users"></div>
       <div class="list" id="ulist"></div>
+
+      <h2 style="margin-top:28px">Admin accounts</h2>
+      <div class="card form2">
+        <div><label for="cp-cur">Current password</label><input type="password" id="cp-cur" autocomplete="current-password"></div>
+        <div><label for="cp-new">New password (8+ characters)</label><input type="password" id="cp-new" autocomplete="new-password"></div>
+        <div style="grid-column:1/-1"><button class="btn" id="cp-go">Change my password</button></div>
+        <div><label for="ad-em">Add another admin: email</label><input type="email" id="ad-em" autocapitalize="none"></div>
+        <div><label for="ad-pw">Their password (8+ characters)</label><input type="password" id="ad-pw" autocomplete="new-password"></div>
+        <div style="grid-column:1/-1"><button class="btn alt" id="ad-go">Add admin</button></div>
+      </div>
     </section>
   </main>
 </div>
@@ -147,23 +163,48 @@ let token=sessionStorage.getItem('spo_admin')||'', SERVICES={}, PRICES={}, PAYS=
 
 function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2200); }
 async function call(action,data={}){
-  const r=await fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({action,...data})});
-  let j={}; try{j=await r.json()}catch{}
+  let r,j={};
+  try{ r=await fetch('/api/admin',{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({action,...data})}); }
+  catch(e){ throw Object.assign(new Error('network'),{code:'network',status:0}); }
+  try{ j=await r.json(); }catch{ throw Object.assign(new Error('bad_response'),{code:r.status===404?'not_found_api':'bad_response',status:r.status}); }
   if(r.status===401&&action!=='login'){ logout(); throw new Error('Session expired. Sign in again.'); }
   if(!r.ok) throw Object.assign(new Error(j.error||'error'),{code:j.error,status:r.status});
   return j;
 }
-function logout(){ token=''; sessionStorage.removeItem('spo_admin'); clearInterval(timer); $('#app').style.display='none'; $('#login').style.display='grid'; }
-async function login(){
-  $('#lerr').textContent=''; $('#go').disabled=true;
-  try{ const j=await call('login',{password:$('#pw').value}); token=j.token; sessionStorage.setItem('spo_admin',token); $('#pw').value=''; start(); }
-  catch(e){ $('#lerr').textContent = e.code==='wrong_password'?'Wrong password.':e.code==='too_many'?'Too many attempts. Wait 15 minutes.':'Could not sign in. Try again.'; }
+function logout(){ token=''; sessionStorage.removeItem('spo_admin'); sessionStorage.removeItem('spo_admin_email'); clearInterval(timer); $('#app').style.display='none'; $('#login').style.display='grid'; }
+let mode='login';
+function paintMode(){
+  const s=mode==='setup';
+  $('#l-title').textContent=s?'Create your admin account':'Spoedit admin';
+  $('#l-sub').textContent=s?'First time here. Choose the email and password you will use to sign in.':'Sign in with your admin email and password.';
+  $('#pw2wrap').hidden=!s; $('#go').textContent=s?'Create account':'Sign in'; $('#forgot').hidden=s;
+  $('#pw').autocomplete=s?'new-password':'current-password';
+}
+$('#showpw').onclick=()=>{ const i=$('#pw'); const show=i.type==='password'; i.type=show?'text':'password'; $('#pw2').type=i.type; $('#showpw').textContent=show?'Hide':'Show'; };
+async function submit(){
+  const err=$('#lerr'); err.textContent=''; const email=$('#em').value.trim(), pw=$('#pw').value;
+  if(!email||!pw){ err.textContent='Enter your email and password.'; return; }
+  if(mode==='setup'&&pw!==$('#pw2').value){ err.textContent='The two passwords do not match.'; return; }
+  $('#go').disabled=true;
+  try{
+    const j=await call(mode==='setup'?'setup':'login',{email,password:pw});
+    token=j.token; sessionStorage.setItem('spo_admin',token); sessionStorage.setItem('spo_admin_email',j.email); $('#pw').value=''; $('#pw2').value=''; start();
+  }catch(e){
+    const m={bad_login:'Wrong email or password.',too_many:'Too many attempts. Wait 15 minutes and try again.',weak_password:'Use a password of at least 8 characters.',bad_email:'Enter a valid email address.',db_not_configured:'The database is not connected yet. In Vercel, add an Upstash Redis database under Storage, then Redeploy.',server_error:'The server hit an error. Open yoursite/api/health to see if the database is connected.',not_found_api:'The server code was not found. The api folder must be at the top level of your Vercel project.',bad_response:'The server sent an unexpected reply. Open yoursite/api/health to check it.',network:'Could not reach the server. Check your internet connection.'};
+    if(e.code==='already_setup'){ mode='login'; paintMode(); err.textContent='An admin account already exists. Sign in instead.'; }
+    else err.textContent=m[e.code]||'Something went wrong (error '+(e.status||'?')+'). Open yoursite/api/health to check the server.';
+  }
   $('#go').disabled=false;
 }
-$('#go').onclick=login; $('#pw').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
+$('#go').onclick=submit; ['em','pw','pw2'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{ if(e.key==='Enter') submit(); }));
+async function init(){
+  try{ const s=await call('status'); mode=s.needsSetup?'setup':'login'; }
+  catch(e){ $('#lerr').textContent = e.code==='db_not_configured'||e.status===503 ? 'The database is not connected yet. In Vercel, add an Upstash Redis database under Storage, then Redeploy.' : e.code==='not_found_api' ? 'The server code was not found. The api folder must be at the top level of your Vercel project.' : 'Could not load the server status. Open yoursite/api/health to check.'; }
+  paintMode();
+  if(token) start().catch(()=>logout());
+}
 $('#out').onclick=logout; $('#refresh').onclick=()=>loadAll(true);
-
-async function start(){ $('#login').style.display='none'; $('#app').style.display='block'; await loadAll(); clearInterval(timer); timer=setInterval(()=>{ if(!document.hidden) loadPayments(); },20000); }
+async function start(){ $('#who').textContent=sessionStorage.getItem('spo_admin_email')||'Admin'; $('#login').style.display='none'; $('#app').style.display='block'; await loadAll(); clearInterval(timer); timer=setInterval(()=>{ if(!document.hidden) loadPayments(); },20000); }
 async function loadAll(manual){ try{ await Promise.all([loadPayments(),loadPrices(),loadUsers(),loadSettings()]); $('#dbwarn').style.display='none'; if(manual) toast('Updated'); }catch(e){ if(e.code==='db_not_configured'||e.status===503) $('#dbwarn').style.display='block'; else toast(e.message); } }
 
 /* tabs */
@@ -237,6 +278,11 @@ $('#prices').addEventListener('click',async e=>{
   }
 });
 
+/* ---------- admin accounts ---------- */
+const accErr={bad_login:'Current password is wrong',weak_password:'Password must be at least 8 characters',bad_email:'Enter a valid email',exists:'That admin already exists'};
+$('#cp-go').onclick=async()=>{ try{ await call('changePassword',{current:$('#cp-cur').value,password:$('#cp-new').value}); $('#cp-cur').value=''; $('#cp-new').value=''; toast('Password changed'); }catch(e){ toast(accErr[e.code]||'Could not change password'); } };
+$('#ad-go').onclick=async()=>{ try{ await call('addAdmin',{email:$('#ad-em').value,password:$('#ad-pw').value}); $('#ad-em').value=''; $('#ad-pw').value=''; toast('Admin added'); }catch(e){ toast(accErr[e.code]||'Could not add admin'); } };
+
 /* ---------- users ---------- */
 async function loadUsers(){ const j=await call('users'); USERS=j.users; SERVICES=j.services; drawUsers(); }
 $('#usearch').addEventListener('input',drawUsers);
@@ -270,7 +316,7 @@ $('#ulist').addEventListener('click',async e=>{
   }catch(err){ toast('Failed: '+err.message); }
 });
 
-if(token){ start().catch(()=>logout()); }
+init();
 </script>
 </body>
 </html>

@@ -73,7 +73,7 @@ async function getSettings() {
   const m = s.methods || {}, bk = s.bank || {};
   return {
     methods: { whatsapp: m.whatsapp !== false, bank: m.bank !== false },
-    whatsappNumber: s.whatsappNumber || '2349124154453',
+    whatsappNumber: s.whatsappNumber || '2348118293462',
     bank: { name: bk.name || 'Kuda Bank', number: bk.number || '2013463188', holder: bk.holder || '' }
   };
 }

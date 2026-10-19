@@ -1,21 +1,38 @@
 const crypto = require('crypto');
 const { redis, send, fail, readBody, ipHash, normPhone, getPrices, getSettings, getUser, saveUser, SERVICES } = require('../lib/core');
 
-// Admin password: set ADMIN_PASSWORD in Vercel to override this default.
-const PASSWORD = process.env.ADMIN_PASSWORD || 'Sirprof123...';
-const secret = () => process.env.ADMIN_SECRET || PASSWORD;
-const sha = s => crypto.createHash('sha256').update(String(s)).digest();
-
-function sign() {
-  const body = Buffer.from(String(Date.now() + 12 * 3600e3)).toString('base64url');
-  return body + '.' + crypto.createHmac('sha256', secret()).update(body).digest('base64url');
+// ---- Admin accounts (email + password), stored in the database ----
+const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
+const hashPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 64).toString('hex');
+let _secret = '';
+async function secret() {
+  if (process.env.ADMIN_SECRET) return process.env.ADMIN_SECRET;
+  if (_secret) return _secret;
+  let s = await redis('GET', 'spo:secret');
+  if (!s) { await redis('SET', 'spo:secret', crypto.randomBytes(32).toString('hex'), 'NX'); s = await redis('GET', 'spo:secret'); }
+  return (_secret = s);
 }
-function verify(t) {
-  if (!t || !t.includes('.')) return false;
+async function sign(email) {
+  const body = Buffer.from(JSON.stringify({ exp: Date.now() + 12 * 3600e3, email })).toString('base64url');
+  return body + '.' + crypto.createHmac('sha256', await secret()).update(body).digest('base64url');
+}
+async function verify(t) {
+  if (!t || !t.includes('.')) return null;
   const [b, s] = t.split('.');
-  const e = crypto.createHmac('sha256', secret()).update(b).digest('base64url');
-  if (!s || s.length !== e.length || !crypto.timingSafeEqual(Buffer.from(s), Buffer.from(e))) return false;
-  return Number(Buffer.from(b, 'base64url').toString()) > Date.now();
+  const e = crypto.createHmac('sha256', await secret()).update(b).digest('base64url');
+  if (!s || s.length !== e.length || !crypto.timingSafeEqual(Buffer.from(s), Buffer.from(e))) return null;
+  try { const p = JSON.parse(Buffer.from(b, 'base64url').toString()); return p.exp > Date.now() ? p : null; } catch { return null; }
+}
+async function limit(req, name, max) {
+  const key = 'spo:rl:' + name + ':' + ipHash(req);
+  const n = await redis('INCR', key);
+  if (n === 1) await redis('EXPIRE', key, 900);
+  return n <= max;
+}
+async function createAdmin(email, password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  await redis('SET', 'spo:admin:' + email, JSON.stringify({ email, salt, hash: hashPw(password, salt), created: Date.now() }));
+  await redis('SADD', 'spo:admins', email);
 }
 const loadMany = async (prefix, ids) => ids.length ? (await redis('MGET', ...ids.map(i => prefix + i))).filter(Boolean).map(JSON.parse) : [];
 
@@ -23,19 +40,36 @@ module.exports = async (req, res) => {
   try {
     if (req.method !== 'POST') return send(res, 405, { error: 'method' });
     const b = readBody(req), a = b.action;
+    const email = String(b.email || '').trim().toLowerCase();
 
-    if (a === 'login') {
-      const key = 'spo:login:' + ipHash(req);
-      let n = 0;
-      try { n = await redis('INCR', key); if (n === 1) await redis('EXPIRE', key, 900); }
-      catch (e) { if (e.message !== 'DB_NOT_CONFIGURED') throw e; } // lets you sign in before the database is connected
-      if (n > 8) return send(res, 429, { error: 'too_many' });
-      if (!crypto.timingSafeEqual(sha(b.password || ''), sha(PASSWORD))) return send(res, 401, { error: 'wrong_password' });
-      try { await redis('DEL', key); } catch {}
-      return send(res, 200, { token: sign() });
+    // Is this a brand-new site that still needs its first admin account?
+    if (a === 'status') {
+      const admins = await redis('SMEMBERS', 'spo:admins');
+      return send(res, 200, { needsSetup: admins.length === 0 || process.env.RESET_ADMIN === 'true' });
     }
 
-    if (!verify((req.headers.authorization || '').replace(/^Bearer /, ''))) return send(res, 401, { error: 'unauthorized' });
+    // Create the first admin account (only while none exists, or while RESET_ADMIN=true is set in Vercel)
+    if (a === 'setup') {
+      if (!(await limit(req, 'setup', 10))) return send(res, 429, { error: 'too_many' });
+      const admins = await redis('SMEMBERS', 'spo:admins');
+      if (admins.length > 0 && process.env.RESET_ADMIN !== 'true') return send(res, 403, { error: 'already_setup' });
+      if (!emailOk(email)) return send(res, 400, { error: 'bad_email' });
+      if (String(b.password || '').length < 8 || String(b.password).length > 200) return send(res, 400, { error: 'weak_password' });
+      await createAdmin(email, b.password);
+      return send(res, 200, { token: await sign(email), email });
+    }
+
+    if (a === 'login') {
+      if (!(await limit(req, 'login', 10))) return send(res, 429, { error: 'too_many' });
+      const raw = emailOk(email) ? await redis('GET', 'spo:admin:' + email) : null;
+      const acc = raw ? JSON.parse(raw) : { salt: 'x'.repeat(32), hash: '0'.repeat(128) };
+      const given = Buffer.from(hashPw(b.password || '', acc.salt)), real = Buffer.from(acc.hash);
+      if (!raw || given.length !== real.length || !crypto.timingSafeEqual(given, real)) return send(res, 401, { error: 'bad_login' });
+      return send(res, 200, { token: await sign(email), email });
+    }
+
+    const me = await verify((req.headers.authorization || '').replace(/^Bearer /, ''));
+    if (!me) return send(res, 401, { error: 'unauthorized' });
 
     switch (a) {
       case 'payments': {
@@ -66,6 +100,22 @@ module.exports = async (req, res) => {
           await redis('SET', 'spo:p:' + p.ref, JSON.stringify(p));
         }
         return send(res, 200, { ok: true, status: p.status });
+      }
+      case 'addAdmin': {
+        if (!emailOk(email)) return send(res, 400, { error: 'bad_email' });
+        if (String(b.password || '').length < 8) return send(res, 400, { error: 'weak_password' });
+        if (await redis('GET', 'spo:admin:' + email)) return send(res, 409, { error: 'exists' });
+        await createAdmin(email, b.password);
+        return send(res, 200, { ok: true });
+      }
+      case 'changePassword': {
+        const acc = JSON.parse((await redis('GET', 'spo:admin:' + me.email)) || 'null');
+        if (!acc) return send(res, 404, { error: 'not_found' });
+        const given = Buffer.from(hashPw(b.current || '', acc.salt)), real = Buffer.from(acc.hash);
+        if (given.length !== real.length || !crypto.timingSafeEqual(given, real)) return send(res, 403, { error: 'bad_login' });
+        if (String(b.password || '').length < 8) return send(res, 400, { error: 'weak_password' });
+        await createAdmin(me.email, b.password);
+        return send(res, 200, { ok: true });
       }
       case 'settings':
         return send(res, 200, await getSettings());

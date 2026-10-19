@@ -5,7 +5,7 @@
    **Add New > Project** and import it. Leave all build settings empty. Click Deploy.
    (Or run `npx vercel` inside the folder.)
 2. The site works straight away: all tools run, and every visitor gets 2 free watermarked downloads.
-3. Admin page: `yoursite.com/admin`  Password: `Sirprof123...`
+3. Admin page: `yoursite.com/admin`. The first time you open it you create your admin account with your email and a password (needs the database below).
 
 ## Turn on payments, price changes and bans (2 minutes)
 Without a database the site runs in trial-only mode. To switch on the full admin features:
@@ -13,10 +13,13 @@ Without a database the site runs in trial-only mode. To switch on the full admin
 2. Click **Redeploy** (Deployments > the three dots > Redeploy).
 3. Open `/admin`. The yellow "Database not connected" notice disappears.
 
-## Change the admin password
-The password is set in `api/admin.js` as a default. To change it without editing code, add an environment
-variable `ADMIN_PASSWORD` in Vercel (Settings > Environment Variables) and redeploy. Pick something longer
-and harder to guess than the default.
+## Admin account
+- **First time:** open `/admin`. If no admin exists yet you will see "Create your admin account". Enter your email and a password
+  (8+ characters). Do this right after connecting the database, before sharing the link with anyone.
+- **After that:** sign in with that email and password. In `/admin > Prices & users > Admin accounts` you can change your password
+  or add another admin.
+- **Forgot your password:** in Vercel add the environment variable `RESET_ADMIN` = `true`, redeploy, open `/admin` and create a new
+  account. Then delete `RESET_ADMIN` and redeploy again.
 
 ## How payments work
 Customers can pay two ways. You control both in `/admin > Prices & users > Payment options`.
@@ -40,3 +43,9 @@ They tap **I've paid** again (it also checks automatically) and download without
 - Always check you received the money before you confirm a payment.
 - A determined technical user could strip the watermark by editing the page code. Full protection needs server-side processing.
 - The ID card tool is for organisation, school, staff, member and event cards. It refuses government-style cards.
+
+## If something does not work
+Open `yoursite.vercel.app/api/health` in your browser. You should see `"version":"email-admin-v2"` and `"database":"connected"`.
+- Page not found: the `api` folder is not at the top level of the project. In Vercel, Settings > General > Root Directory must point at the folder that contains `index.html` and `api`.
+- `database` says NOT connected or ERROR: connect the Upstash Redis database (Storage tab) to this project and redeploy.
+- No `version` line: Vercel is still serving an old deployment. Deploy again and check the Deployments tab shows the new one as "Current".
