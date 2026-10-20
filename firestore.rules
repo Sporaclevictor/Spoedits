@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function realUser() { return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function isAdmin() { return realUser() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    // Cost of one use of a service, in units (set by the admin; 5 if not set yet)
+    function costOf(s) {
+      return exists(/databases/$(database)/documents/settings/app)
+        ? get(/databases/$(database)/documents/settings/app).data.get('costs', {}).get(s, 5)
+        : 5;
+    }
+    // Naira price of one unit (set by the admin; 100 if not set yet)
+    function unitPrice() {
+      return exists(/databases/$(database)/documents/settings/app)
+        ? get(/databases/$(database)/documents/settings/app).data.get('unitPrice', 100)
+        : 100;
+    }
+
+    // The first admin account can only be claimed once, in one batch that writes both documents.
+    match /meta/setup {
+      allow read: if true;
+      allow create: if realUser()
+        && !exists(/databases/$(database)/documents/meta/setup)
+        && existsAfter(/databases/$(database)/documents/admins/$(request.auth.uid));
+      allow update, delete: if false;
+    }
+    match /admins/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if realUser() && request.auth.uid == uid
+        && !exists(/databases/$(database)/documents/meta/setup)
+        && existsAfter(/databases/$(database)/documents/meta/setup);
+      allow update, delete: if false;
+    }
+
+    // Prices, payment options and bank details. Anyone can read, only admins can change.
+    match /settings/app {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // One document per person: free trials, units and ban flag.
+    match /users/{uid} {
+      function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+      function services() { return ['passport','enhance','iphone','poster','invoice','idcard','doc']; }
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['free','units','banned','phone','name','email','created','last'])
+        && request.resource.data.free == 2
+        && request.resource.data.units == 0
+        && request.resource.data.banned == false
+        && request.resource.data.phone == ''
+        && request.resource.data.name == ''
+        && request.resource.data.email == ''
+        && request.resource.data.created == request.time
+        && request.resource.data.last == request.time;
+      allow update: if isAdmin() || (
+        signedIn() && request.auth.uid == uid && resource.data.banned == false
+        && request.resource.data.last is timestamp
+        && (
+          // use a free trial (watermarked download)
+          (changed().hasOnly(['last', 'free']) && resource.data.free > 0 && request.resource.data.free == resource.data.free - 1)
+          // spend units: exactly the admin's price for that service, never below zero
+          || (changed().hasOnly(['last', 'units', 'svc'])
+              && request.resource.data.svc in services()
+              && request.resource.data.units == resource.data.units - costOf(request.resource.data.svc)
+              && request.resource.data.units >= 0)
+          // profile details
+          || (changed().hasOnly(['last', 'phone', 'name', 'email'])
+              && request.resource.data.phone is string && request.resource.data.phone.size() <= 20
+              && request.resource.data.name is string && request.resource.data.name.size() <= 60
+              && request.resource.data.email is string && request.resource.data.email.size() <= 120)
+          || changed().hasOnly(['last'])
+        )
+      );
+      allow delete: if false;
+    }
+
+    // Unit purchases. Customers create them at the current unit price, only admins can confirm them.
+    match /payments/{ref} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && ref.matches('SPO-[A-Z0-9]{6}')
+        && request.resource.data.keys().hasOnly(['uid','units','amount','status','method','payer','phone','created'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.units is int
+        && request.resource.data.units >= 1 && request.resource.data.units <= 2000
+        && request.resource.data.method in ['bank','whatsapp']
+        && request.resource.data.amount == request.resource.data.units * unitPrice()
+        && request.resource.data.created == request.time
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.banned == false;
+      allow update: if isAdmin() || (
+        signedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed'])
+        && request.resource.data.claimed is timestamp
+      );
+      allow delete: if false;
+    }
+  }
+}
